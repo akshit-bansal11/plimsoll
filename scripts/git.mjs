@@ -4,17 +4,44 @@
 // Run by hooks/register.tsx through node: a hooks module cannot run git itself
 // with parsing this cheap.
 import { execFileSync } from 'node:child_process'
-import { basename } from 'node:path'
+import { existsSync } from 'node:fs'
+import { basename, delimiter, isAbsolute, join } from 'node:path'
 
 const dir = process.argv[2] || process.cwd()
-
-const run = (cmd, args, timeout) =>
-  execFileSync(cmd, args, { cwd: dir, encoding: 'utf8', timeout, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true })
 const GIT_TIMEOUT_MS = 5000
 const GH_TIMEOUT_MS = 8000
-// No optional index lock and no fsmonitor hook: this runs after every turn and
-// must not collide with the user's own git commands.
-const git = (...args) => run('git', ['--no-optional-locks', '-c', 'core.fsmonitor=false', ...args], GIT_TIMEOUT_MS)
+
+// git and gh are found on PATH here, by absolute folder, and run by full path:
+// on Windows a bare name is looked up in the working directory first, and that
+// directory is the repository being inspected, which could hold a planted git.exe.
+const find = name => {
+  const file = process.platform === 'win32' ? `${name}.exe` : name
+  for (const folder of (process.env.PATH || '').split(delimiter)) {
+    if (isAbsolute(folder) && existsSync(join(folder, file))) return join(folder, file)
+  }
+  throw Object.assign(new Error(`${name} is not on PATH`), { code: 'ENOENT' })
+}
+
+// The repository's own config is untrusted too. These override it for every git
+// this script starts, the ones gh starts included: no fsmonitor hook and no
+// signature check (each runs a program the config names), no optional index lock
+// (this runs after every turn and must not collide with the user's own git), no prompt.
+// ponytail: a clean filter the repository's config defines still runs when status
+// re-reads a changed file, as it does for any git prompt; git has no switch for that.
+const env = {
+  ...process.env,
+  GIT_OPTIONAL_LOCKS: '0',
+  GIT_TERMINAL_PROMPT: '0',
+  GIT_CONFIG_COUNT: '2',
+  GIT_CONFIG_KEY_0: 'core.fsmonitor',
+  GIT_CONFIG_VALUE_0: 'false',
+  GIT_CONFIG_KEY_1: 'log.showSignature',
+  GIT_CONFIG_VALUE_1: 'false',
+}
+
+const run = (name, args, timeout) =>
+  execFileSync(find(name), args, { cwd: dir, env, encoding: 'utf8', timeout, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true })
+const git = (...args) => run('git', args, GIT_TIMEOUT_MS)
 const gh = args => run('gh', args, GH_TIMEOUT_MS)
 // Repository and GitHub text is untrusted: an escape sequence must not reach the terminal.
 const clean = text => String(text).replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ').trim()

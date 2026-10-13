@@ -1,0 +1,8 @@
+{
+  "name": "usage-board",
+  "version": "0.2.0",
+  "description": "A HUD above the prompt: context, rate-limit and cost gauges, usage statistics, git and CI status, and an animated mascot",
+  "author": { "name": "Akshit Bansal" },
+  "license": "MIT",
+  "types": "./types/index.d.ts"
+}

@@ -1,0 +1,6 @@
+{
+  "name": "usage-board",
+  "description": "A usage, statistics and git HUD for Claude Code",
+  "owner": { "name": "Akshit Bansal" },
+  "plugins": [{ "name": "usage-board", "source": "./" }]
+}

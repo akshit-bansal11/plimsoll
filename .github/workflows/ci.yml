@@ -1,0 +1,46 @@
+name: CI
+
+# The same checks as the README's Develop section: the price table, the manifest and hooks
+# validation, and the mod's tests. Validation runs with --strict so a warning the runtime would
+# tolerate still fails here.
+#
+# Every `uses:` is pinned to a commit SHA with its tag in a trailing comment, and Dependabot moves the
+# SHA the same way it would move a tag. A tag is a moving pointer: whoever controls an action's repository
+# can repoint it, and the code it then runs is inside this job.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # The CLI that validates and tests the mod. Pinned so a Claude Code release cannot change the gate
+  # under an unchanged branch; move it on purpose when the mod API moves.
+  CLAUDE_CODE_VERSION: 2.1.301
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+      - name: Install Claude Code
+        run: npm install --global "@anthropic-ai/claude-code@$CLAUDE_CODE_VERSION"
+      - name: Price table
+        run: node scripts/check.mjs
+      - name: Validate manifests and hooks
+        run: claude plugin validate --strict .
+      - name: Tests
+        run: claude plugin test .

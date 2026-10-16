@@ -5,15 +5,28 @@
 // (prices.mjs); a subscription is not billed this way.
 // Run by hooks/register.tsx through node: a hooks module cannot read files
 // over 4 MiB itself, and transcripts run to tens of megabytes.
-import { createReadStream, mkdirSync, readFileSync, readdirSync, renameSync, statSync, writeFileSync } from 'node:fs'
+import {
+  constants,
+  copyFileSync,
+  createReadStream,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { createInterface } from 'node:readline'
+import { adoptOldCache, cachePaths } from './cache.mjs'
 import { costOf } from './prices.mjs'
 
 const configDir = process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude')
 const root = join(configDir, 'projects')
-const cachePath = join(configDir, 'usage-board', 'scan-cache-2.json')
+const paths = cachePaths(configDir, join)
+const cachePath = paths.file
 
 const dayOf = date =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -61,6 +74,12 @@ const sumFile = async path => {
     counts.forEach((count, i) => (sum[i] += count))
   }
   return hours
+}
+
+try {
+  adoptOldCache(paths, { constants, copyFileSync, existsSync, mkdirSync })
+} catch {
+  // a failed copy only costs one full scan
 }
 
 let cache = {}

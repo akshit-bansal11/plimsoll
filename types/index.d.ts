@@ -88,7 +88,7 @@ export type Tab = 'usage' | 'stats' | 'git'
 
 declare module 'claude-code' {
   interface PluginState {
-    'usage-board': {
+    plimsoll: {
       totals: Totals | null
       limits: Limit[]
       problem: string | null

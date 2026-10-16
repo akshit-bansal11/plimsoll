@@ -1,9 +1,9 @@
-# usage-board
+# Plimsoll
 
 A heads-up display for [Claude Code](https://claude.com/claude-code), drawn in the band above the prompt.
 
 ```
-── ◢ USAGE-BOARD · *waves* ───────────────────────────────── 1: USAGE  2: STATS  3: GIT ──
+── ◢ PLIMSOLL · *waves* ──────────────────────────────────── 1: USAGE  2: STATS  3: GIT ──
                   CTX    ▰▰▰▱▱▱▱▱▱▱▱▱  28%  276.7K used · 723.3K left     TODAY   43.6M tok  ~$8.86
     /\_/\         5H     ▰▰▰▰▰▱▱▱▱▱▱▱  43%  resets 3h 17m                 WEEK    89.0M tok ~$31.40
    ( ^.^ )/       WEEK   ▰▰▰▰▰▰▰▱▱▱▱▱  56%  resets 1d 2h                  MONTH  427.3M tok ~$142.10
@@ -26,10 +26,11 @@ Gauges are green below 50%, yellow from 50%, orange from 75% and red from 90%.
 In a Claude Code terminal session:
 
 ```
-/plugin install usage-board --marketplace akshit-bansal11/usage-board
+/plugin marketplace add akshit-bansal11/plimsoll
+/plugin install plimsoll@plimsoll
 ```
 
-Answer `y` to add the marketplace, then pick a scope (user scope loads it in every session).
+Pick a scope when asked (user scope loads it in every session).
 
 ## Requirements
 
@@ -53,7 +54,7 @@ The strip needs about 110 columns to lay its two content columns side by side; n
 ## How the numbers are produced
 
 - **Context and rate limits** come from Claude Code itself. Rate-limit windows are only reported on a subscription.
-- **Tokens and statistics** are summed from the transcripts under your Claude config folder (`~/.claude/projects`, or `CLAUDE_CONFIG_DIR`), in local time, weeks starting Monday. Nothing leaves your machine. A cache at `<config dir>/usage-board/` makes later scans fast.
+- **Tokens and statistics** are summed from the transcripts under your Claude config folder (`~/.claude/projects`, or `CLAUDE_CONFIG_DIR`), in local time, weeks starting Monday. Nothing leaves your machine. A cache at `<config dir>/plimsoll/` makes later scans fast.
 - **Dollars are an estimate**, shown with a `~`: each response's tokens priced at Anthropic API list prices from [`scripts/prices.mjs`](scripts/prices.mjs). It is not a bill — a subscription is not charged per token. A model missing from that table counts as $0 until the table is updated; prices in it are as of 2026-10-06.
 - **Pull request and CI status** are fetched with `gh`, only while the git tab is showing.
 
@@ -66,7 +67,7 @@ The strip needs about 110 columns to lay its two content columns side by side; n
 ## Develop
 
 ```
-claude --plugin-dir /path/to/usage-board    # run it from disk
+claude --plugin-dir /path/to/plimsoll       # run it from disk
 claude plugin validate .                     # manifest + hooks check
 claude plugin test .                         # UI and logic tests
 node scripts/check.mjs                       # price table check

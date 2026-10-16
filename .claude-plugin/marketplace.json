@@ -1,6 +1,6 @@
 {
-  "name": "usage-board",
+  "name": "plimsoll",
   "description": "A usage, statistics and git HUD for Claude Code",
   "owner": { "name": "Akshit Bansal" },
-  "plugins": [{ "name": "usage-board", "source": "./" }]
+  "plugins": [{ "name": "plimsoll", "source": "./" }]
 }

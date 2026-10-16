@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Breaking:** renamed from usage-board to Plimsoll. The plugin id is now `plimsoll@plimsoll`, from the marketplace `akshit-bansal11/plimsoll`. Uninstall `usage-board@usage-board` and remove the `usage-board` marketplace, then install the new id.
+- Whether the HUD is hidden resets once, because it is stored under the plugin's name: run `/hud hide` again if you had it hidden.
+- The scan cache moved from `<config dir>/usage-board/` to `<config dir>/plimsoll/`. The first scan copies the old cache across when the new one does not exist yet, so nothing is rescanned; the old folder is left in place and can be deleted.
+
 ## [0.2.1] - 2026-10-13
 
 ### Security

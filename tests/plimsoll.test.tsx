@@ -11,6 +11,7 @@ import {
   spark,
   untilReset,
 } from '../hooks/register'
+import { adoptOldCache, cachePaths } from '../scripts/cache.mjs'
 import type { Git, Totals } from '../types'
 
 const NOW = Date.parse('2026-10-11T10:00:00Z')
@@ -157,7 +158,7 @@ const boot = async ($: Engine, on: On, gitReply: unknown = GIT) => {
   })
   const mountBand = (surface: 'terminal' | 'desktop', bodyColumns: number) =>
     $.ui.mount({
-      plugin: 'usage-board',
+      plugin: 'plimsoll',
       surface,
       component: 'AbovePrompt',
       props: {
@@ -202,11 +203,11 @@ test('the band shows usage, stats and git, and hides on command', async ($, on) 
 
     await cmd('hide')
     const hidden = await mountBand(surface, 140)
-    expect(await hidden.find({ text: /USAGE-BOARD/ })).toBeUndefined()
+    expect(await hidden.find({ text: /PLIMSOLL/ })).toBeUndefined()
     await hidden.unmount()
     await cmd('show')
     const shown = await mountBand(surface, 140)
-    expect(await shown.find({ text: /USAGE-BOARD/ })).toBeDefined()
+    expect(await shown.find({ text: /PLIMSOLL/ })).toBeDefined()
     await shown.unmount()
   }
 })
@@ -224,7 +225,7 @@ test('the columns stack below 110 and keep every figure', async ($, on) => {
 test('a band narrower than the panel draws nothing', async ($, on) => {
   const { mountBand } = await boot($, on)
   const ui = await mountBand('terminal', 40)
-  expect(await ui.find({ text: /USAGE-BOARD/ })).toBeUndefined()
+  expect(await ui.find({ text: /PLIMSOLL/ })).toBeUndefined()
   await ui.unmount()
 })
 
@@ -242,4 +243,36 @@ test('a directory outside any repository says so', async ($, on) => {
   const ui = await mountBand('terminal', 140)
   expect(await ui.find({ text: /Not a git repository/ })).toBeDefined()
   await ui.unmount()
+})
+
+test('the scan cache carries over from usage-board once, and never over a newer one', () => {
+  const files = new Map<string, string>()
+  const dirs: string[] = []
+  const fs = {
+    constants: { COPYFILE_EXCL: 1 },
+    existsSync: (path: string) => files.has(path),
+    mkdirSync: (path: string) => void dirs.push(path),
+    copyFileSync: (from: string, to: string, mode: number) => {
+      expect(mode).toBe(1)
+      files.set(to, files.get(from) ?? '')
+    },
+  }
+  const paths = cachePaths('/cfg', (...parts: string[]) => parts.join('/'))
+  expect(paths).toEqual({
+    dir: '/cfg/plimsoll',
+    file: '/cfg/plimsoll/scan-cache-2.json',
+    old: '/cfg/usage-board/scan-cache-2.json',
+  })
+
+  expect(adoptOldCache(paths, fs)).toBe(false) // neither exists: nothing to copy
+
+  files.set(paths.old, 'old')
+  expect(adoptOldCache(paths, fs)).toBe(true)
+  expect(files.get(paths.file)).toBe('old')
+  expect(files.get(paths.old)).toBe('old') // copied, not moved
+  expect(dirs).toEqual(['/cfg/plimsoll'])
+
+  files.set(paths.file, 'new')
+  expect(adoptOldCache(paths, fs)).toBe(false)
+  expect(files.get(paths.file)).toBe('new')
 })

@@ -10,6 +10,7 @@ All notable changes to this project are documented here. The format follows
 - Releases: a `v*` tag publishes `Plimsoll-<version>.zip` with `SHA256SUMS.txt` and a build provenance attestation.
 - CI runs the price check, strict manifest validation and the tests on every push and pull request.
 - CONTRIBUTING.md and SECURITY.md.
+- A website at plimsoll.vercel.app: a landing page and one-page documentation, with the version, price table and band mock-up read from the repository at build time.
 
 ### Changed
 - **Breaking:** renamed from usage-board to Plimsoll. The plugin id is now `plimsoll@plimsoll`, from the marketplace `akshit-bansal11/plimsoll`. Uninstall `usage-board@usage-board` and remove the `usage-board` marketplace, then install the new id.

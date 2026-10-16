@@ -94,7 +94,7 @@ Then delete `<config dir>/plimsoll/` (`~/.claude/plimsoll/` by default) to remov
 
 ### Prerequisites
 
-Node.js and the [Claude Code](https://claude.com/claude-code) CLI. There is no package.json and nothing to install: the hooks run inside Claude Code, and the scripts use only Node's standard library.
+Node.js and the [Claude Code](https://claude.com/claude-code) CLI. The plugin has no package.json and nothing to install: the hooks run inside Claude Code, and the scripts use only Node's standard library. Only the site under `site/` has dependencies.
 
 ### Checks
 
@@ -118,6 +118,7 @@ claude --plugin-dir /path/to/plimsoll       # run it from disk
 - `hooks/mascot.ts` — the kitten's frames.
 - `scripts/scan.mjs` — sums the transcripts; `scripts/cache.mjs` names its cache; `scripts/prices.mjs` holds the price table.
 - `scripts/git.mjs` — reads git and `gh`.
+- `site/` — the [website and documentation](https://plimsoll.vercel.app); see [site/README.md](site/README.md).
 
 ## Releases
 

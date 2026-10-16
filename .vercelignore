@@ -1,0 +1,11 @@
+# The deploy is built from the repository root, because site/lib/repo.ts reads
+# ../.claude-plugin/plugin.json, ../scripts/prices.mjs and ../README.md at build time.
+# Everything the build does not read is excluded so the upload stays small.
+/hooks
+/tests
+/types
+/.github
+
+node_modules
+.next
+out

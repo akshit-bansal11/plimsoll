@@ -1,0 +1,76 @@
+<!doctype html>
+<!--
+  The source of assets/social-preview.png (1280x640, GitHub's and Open Graph's size).
+  Render it with any browser at that viewport, e.g. a Playwright screenshot. The gauge
+  bars are decorative and carry no figures, so nothing here reads as real output.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=JetBrains+Mono:wght@500;700&display=block" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1280px; height: 640px; }
+  body {
+    background: #0e0f12;
+    color: #f2f3f5;
+    font-family: Lato, system-ui, sans-serif;
+    position: relative;
+    overflow: hidden;
+  }
+  .grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(#2b2d33 1px, transparent 1px),
+      linear-gradient(90deg, #2b2d33 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse 70% 80% at 75% 50%, black, transparent);
+    opacity: 0.55;
+  }
+  .wrap { position: absolute; inset: 0; padding: 72px 80px; display: grid; grid-template-columns: 1fr 470px; gap: 56px; align-items: center; }
+  .brand { display: flex; align-items: center; gap: 20px; }
+  .brand img { width: 84px; height: 84px; }
+  .brand span { font-weight: 900; font-size: 64px; letter-spacing: -0.02em; }
+  h1 { margin-top: 34px; font-weight: 900; font-size: 52px; line-height: 1.05; letter-spacing: -0.02em; max-width: 13ch; }
+  p.sub { margin-top: 22px; color: #9a9ca3; font-size: 24px; line-height: 1.4; max-width: 30ch; }
+  .foot { margin-top: 34px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .chip { background: #1b1c20; border: 1px solid #2b2d33; border-radius: 999px; padding: 8px 16px; font-size: 18px; font-weight: 700; }
+  .chip.accent { color: #4da3ff; }
+  .panel { background: #16171b; border: 1px solid #2b2d33; border-radius: 20px; padding: 30px 30px 26px; box-shadow: 0 24px 60px rgb(0 0 0 / 0.45); font-family: "JetBrains Mono", ui-monospace, monospace; }
+  .head { display: flex; justify-content: space-between; color: #00e5ff; font-size: 17px; font-weight: 700; padding-bottom: 20px; border-bottom: 1px solid #2b2d33; }
+  .head .tabs { color: #9a9ca3; font-weight: 500; }
+  .head .tabs b { color: #00e5ff; }
+  .row { display: grid; grid-template-columns: 72px 1fr; align-items: center; gap: 14px; margin-top: 22px; font-size: 18px; }
+  .row .k { color: #00e5ff; }
+  .bar { display: flex; gap: 5px; }
+  .bar i { display: block; height: 18px; flex: 1; border-radius: 4px; background: #2b2d33; }
+  .ok i.on { background: #22c55e; } .warm i.on { background: #eab308; } .hot i.on { background: #f97316; }
+  .line { margin-top: 26px; height: 2px; background: repeating-linear-gradient(90deg, #4da3ff 0 10px, transparent 10px 18px); opacity: 0.8; }
+  .cap { margin-top: 10px; color: #9a9ca3; font-family: Lato, sans-serif; font-size: 16px; }
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="wrap">
+    <div>
+      <div class="brand"><img src="plimsoll-dark.svg" alt=""><span>Plimsoll</span></div>
+      <h1>Know how close you are to the line.</h1>
+      <p class="sub">A usage HUD for Claude Code: context, rate limits, estimated cost, stats and git, right above the prompt.</p>
+      <div class="foot">
+        <span class="chip accent">Claude Code mod</span>
+        <span class="chip">No account, no telemetry</span>
+        <span class="chip">MIT</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="head"><span>◢ PLIMSOLL</span><span class="tabs"><b>USAGE</b> · STATS · GIT</span></div>
+      <div class="row ok"><span class="k">CTX</span><span class="bar"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+      <div class="row warm"><span class="k">5H</span><span class="bar"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></span></div>
+      <div class="row hot"><span class="k">WEEK</span><span class="bar"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></div>
+      <div class="line"></div>
+      <div class="cap">Green below 50%, yellow from 50, orange from 75, red from 90.</div>
+    </div>
+  </div>
+</body>
+</html>

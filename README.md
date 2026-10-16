@@ -1,3 +1,5 @@
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/plimsoll-dark.svg"><img src="assets/plimsoll-light.svg" width="96" alt="Plimsoll"></picture></p>
+
 # Plimsoll
 
 Plimsoll is a heads-up display for [Claude Code](https://claude.com/claude-code), drawn in the band above the prompt: how full the context window is, how much of your rate limits is left, what the tokens would have cost, and the state of the repository you are in.
@@ -12,7 +14,7 @@ Plimsoll is a heads-up display for [Claude Code](https://claude.com/claude-code)
 
 <p align="center"><sub>An illustration of the layout, not real output.</sub></p>
 
-A ship's Plimsoll line is painted on the hull to show how deep it may safely sit; this one shows how close a session is to its limits. It is for keeping an eye on the gauges without stopping to ask: the context window filling up before it compacts, a five-hour window about to run out mid-task, a week's usage creeping up. Everything is read from Claude Code itself and from the transcripts already on your disk. Nothing is sent anywhere, and there is no account.
+A ship's Plimsoll line is painted on the hull to show how deep it may safely sit; this one shows how close a session is to its limits. It is for keeping an eye on the gauges without stopping to ask: the context window filling up before it compacts, a five-hour window about to run out mid-task, a week's usage creeping up. Everything is read from Claude Code itself, from the transcripts already on your disk and, for pull requests and CI, from GitHub through your own `gh`. There is no server, no account and no telemetry.
 
 [![CI](https://github.com/akshit-bansal11/plimsoll/actions/workflows/ci.yml/badge.svg)](https://github.com/akshit-bansal11/plimsoll/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/akshit-bansal11/plimsoll)](https://github.com/akshit-bansal11/plimsoll/releases/latest)
@@ -118,6 +120,7 @@ claude --plugin-dir /path/to/plimsoll       # run it from disk
 - `hooks/mascot.ts` — the kitten's frames.
 - `scripts/scan.mjs` — sums the transcripts; `scripts/cache.mjs` names its cache; `scripts/prices.mjs` holds the price table.
 - `scripts/git.mjs` — reads git and `gh`.
+- `assets/` — the logo (light and dark) and the social preview, with the HTML it is rendered from.
 - `site/` — the [website and documentation](https://plimsoll.akshitbansal.me); see [site/README.md](site/README.md).
 
 ## Releases

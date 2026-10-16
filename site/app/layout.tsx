@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Lato } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import { SITE } from "@/lib/nav";
+import { SITE, SOCIAL_IMAGE } from "@/lib/nav";
 import "./globals.css";
 
 /*
@@ -41,9 +41,11 @@ export const metadata: Metadata = {
     type: "website",
     url: "/",
     siteName: "Plimsoll",
+    images: [SOCIAL_IMAGE],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
+    images: [SOCIAL_IMAGE],
   },
 };
 

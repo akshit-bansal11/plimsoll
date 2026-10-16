@@ -1,0 +1,152 @@
+name: Release
+
+# Push a tag such as v0.3.0 to publish. The checks CI runs pass first, then the plugin's runtime files
+# are zipped into Plimsoll-0.3.0.zip and attached to a GitHub Release titled "Plimsoll v0.3.0", with
+# SHA256SUMS.txt and a build provenance attestation beside it. The tag must match plugin.json's version,
+# so a release can never ship a manifest that reports a different one.
+#
+# Running this by hand instead builds the same zip from whatever the branch currently holds and attaches
+# it to a DRAFT release. A draft is visible only to accounts with push access to the repo, and GitHub does
+# not create its git tag until it is published, so nothing about it reaches the public: no tag, no entry
+# on the releases page, and releases/latest keeps pointing at the last real release.
+#
+# Installs come from the marketplace, which reads the repository itself; the zip is for an offline or
+# pinned install (`claude --plugin-dir`) and for checking what a version contained.
+#
+# Every `uses:` is pinned to a commit SHA with its tag in a trailing comment, and Dependabot moves the
+# SHA the same way it would move a tag. A tag is a moving pointer: whoever controls an action's repository
+# can repoint it, and the code it then runs is inside this job.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      label:
+        description: 'Name for the draft build (a run number is appended, so it never collides)'
+        default: 'test-build'
+        required: false
+
+permissions:
+  contents: read
+
+env:
+  CLAUDE_CODE_VERSION: 2.1.301
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      # Both for the provenance attestation: a token to prove which workflow ran, and the right to store it.
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+
+      # A tagged run is versioned by its tag, which must be plugin.json's version. A hand-run draft has no
+      # tag, so it takes plugin.json's version plus the run number, which keeps two drafts of the same
+      # version apart once downloaded.
+      - name: Read the version
+        env:
+          IS_DRAFT: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          manifest=$(node -p "require('./.claude-plugin/plugin.json').version")
+          if [ "$IS_DRAFT" = true ]; then
+            version="$manifest-draft.$GITHUB_RUN_NUMBER"
+          else
+            version="${GITHUB_REF_NAME#v}"
+            if [ "$version" != "$manifest" ]; then
+              echo "::error::Tag $GITHUB_REF_NAME does not match plugin.json's version $manifest"
+              exit 1
+            fi
+          fi
+          echo "MANIFEST_VERSION=$manifest" >> "$GITHUB_ENV"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Install Claude Code
+        run: npm install --global "@anthropic-ai/claude-code@$CLAUDE_CODE_VERSION"
+      - name: Checks
+        run: |
+          node scripts/check.mjs
+          claude plugin validate --strict .
+          claude plugin test .
+
+      # git archive takes tracked files only, so nothing generated or left on the runner can slip in. The
+      # files sit under a plimsoll/ folder: unzipped, that folder is the plugin. No tests, site or workflows.
+      - name: Zip the plugin
+        run: |
+          paths=(.claude-plugin hooks scripts types README.md LICENSE)
+          if [ -d commands ]; then paths+=(commands); fi
+          mkdir dist
+          git archive --format=zip --prefix=plimsoll/ -o "dist/Plimsoll-$VERSION.zip" HEAD "${paths[@]}"
+          unzip -l "dist/Plimsoll-$VERSION.zip"
+          (cd dist && sha256sum Plimsoll-*.zip > SHA256SUMS.txt)
+          cat dist/SHA256SUMS.txt
+
+      # Tagged releases only. An attestation of a public repository is written to Sigstore's public
+      # transparency log, which would announce a draft build that is meant to stay private.
+      - name: Attest where the zip was built
+        if: github.event_name == 'push'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
+        with:
+          subject-path: 'dist/Plimsoll-*.zip'
+
+      # A tagged run takes that version's section of CHANGELOG.md. A hand-run draft takes Unreleased,
+      # because a draft is a build of work in progress, or plugin.json's version when nothing is
+      # unreleased yet.
+      - name: Take the notes from the changelog
+        env:
+          IS_DRAFT: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          section_of() {
+            awk -v v="$1" '
+              index($0, "## [" v "]") == 1 { on = 1; next }
+              on && index($0, "## [") == 1 { exit }
+              on { print }
+            ' CHANGELOG.md | sed -e '/./,$!d'
+          }
+          if [ "$IS_DRAFT" = true ]; then
+            section_of Unreleased > notes.md
+            if [ ! -s notes.md ]; then section_of "$MANIFEST_VERSION" > notes.md; fi
+          else
+            section_of "$VERSION" > notes.md
+          fi
+          if [ ! -s notes.md ]; then
+            echo "::error::CHANGELOG.md has no section for this release"
+            exit 1
+          fi
+          cat notes.md
+
+      - name: Publish the release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "$GITHUB_REF_NAME" dist/Plimsoll-*.zip dist/SHA256SUMS.txt
+          --repo "$GITHUB_REPOSITORY" --title "Plimsoll $GITHUB_REF_NAME" --notes-file notes.md --verify-tag
+
+      # --draft is what keeps this private, and the run number is what keeps two test builds from
+      # colliding on a name: deleting a release is an owner action, so a job must never need one deleted
+      # to succeed. --target pins the draft to this commit; the tag is only cut if it is ever published.
+      - name: Attach the draft build
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ inputs.label }}-${{ github.run_number }}
+        run: |
+          gh release create "$NAME" dist/Plimsoll-*.zip dist/SHA256SUMS.txt --repo "$GITHUB_REPOSITORY" \
+            --title "Plimsoll v$VERSION" --notes-file notes.md --draft --target "$GITHUB_SHA"
+          {
+            echo "Draft build **$NAME**, visible only to accounts with push access to this repo."
+            echo
+            echo 'Download the zip, with its SHA256SUMS.txt:'
+            echo '```'
+            echo "gh release download $NAME --repo $GITHUB_REPOSITORY --dir ."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

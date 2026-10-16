@@ -11,7 +11,7 @@ All notable changes to this project are documented here. The format follows
 - A social preview image for the repository and for links to the site.
 
 ### Fixed
-- The website's address is https://plimsoll.akshitbansal.me. Its canonical links, sitemap, the README's docs badge and plugin.json's `homepage` named plimsoll.vercel.app, which belongs to another Vercel project.
+- The website's address is https://plimsoll.akshitbansal.dev. Its canonical links, sitemap, the README's docs badge and plugin.json's `homepage` named plimsoll.vercel.app, which belongs to another Vercel project.
 - The README no longer says nothing is sent anywhere: pull request and CI status come from GitHub through your own `gh`.
 
 ## [0.3.0] - 2026-10-16

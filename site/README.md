@@ -1,7 +1,7 @@
 # Plimsoll website
 
 Two routes: a landing page at `/`, and the whole documentation on one page at `/docs`.
-Live at [plimsoll.akshitbansal.me](https://plimsoll.akshitbansal.me), deployed to Vercel from the
+Live at [plimsoll.akshitbansal.dev](https://plimsoll.akshitbansal.dev), deployed to Vercel from the
 repository root.
 
 The stack is the Edgepad site's, copied on purpose: Next.js as a static export,

@@ -3,7 +3,7 @@
   "version": "0.3.0",
   "description": "A HUD above the prompt: context, rate-limit and cost gauges, usage statistics, git and CI status, and an animated mascot",
   "author": { "name": "Akshit Bansal" },
-  "homepage": "https://plimsoll.akshitbansal.me",
+  "homepage": "https://plimsoll.akshitbansal.dev",
   "repository": "https://github.com/akshit-bansal11/plimsoll",
   "license": "MIT",
   "types": "./types/index.d.ts"

@@ -3,21 +3,22 @@
 A heads-up display for [Claude Code](https://claude.com/claude-code), drawn in the band above the prompt.
 
 ```
-── ◢ USAGE-BOARD · *waves* ───────────────────────────────── 1: USAGE  2: STATS  3: GIT ──
-                  CTX    ▰▰▰▱▱▱▱▱▱▱▱▱  28%  276.7K used · 723.3K left     TODAY   43.6M tok  ~$8.86
-    /\_/\         5H     ▰▰▰▰▰▱▱▱▱▱▱▱  43%  resets 3h 17m                 WEEK    89.0M tok ~$31.40
-   ( ^.^ )/       WEEK   ▰▰▰▰▰▰▰▱▱▱▱▱  56%  resets 1d 2h                  MONTH  427.3M tok ~$142.10
-    (")(") ~
+◆ USAGE-BOARD  hi! ─────────────────────────────────────────────  USAGE   STATS   GIT
+                          │ LIMITS                                  │ SPEND  est. at API prices
+   [ pixel-art tabby,     │ CTX    ━━━━━━━━━━━━━━  28%  276.7K used │ TODAY    43.6M tok    ~$8.86
+     6 rows tall, drawn   │ 5H     ━━━━━━━━━━━━━━  43%  resets 3h   │ WEEK     89.0M tok   ~$31.40
+     in coloured half     │ WEEK   ━━━━━━━━━━━━━━  56%  resets 1d   │ MONTH   427.3M tok  ~$142.10
+     blocks ]             │                                         │
 ```
 
-(The figures above are an illustration of the layout, not real output.)
+(The figures above are an illustration of the layout, not real output. The cat is drawn in colour with half-block characters, two square pixels per cell, so it does not survive being pasted as plain text.)
 
 ## What it shows
 
 - **Usage** — how full the context window is (tokens used and left), your 5-hour and weekly rate-limit windows with time to reset, and tokens plus estimated cost for today, this week and this month.
 - **Stats** — your peak hours, busiest weekday, the last 30 days and 12 months as sparklines, and your most active day, week and month.
 - **Git** — repository, branch, ahead/behind, staged/modified/untracked/conflict/stash counts, the last commit, the branch's pull request with review state and check counts, and the latest CI run.
-- **A mascot** — a small ASCII kitten that idles, types while Claude works, sleeps when you are away and panics when a gauge passes 90%.
+- **A mascot** — a pixel-art orange tabby that blinks, looks around, waves, grooms, bats at yarn, purrs and dances while idle, types at a laptop while Claude works, curls up asleep when you are away, and bristles when a gauge passes 90%. It needs a terminal with 24-bit colour to look right.
 
 Gauges are green below 50%, yellow from 50%, orange from 75% and red from 90%.
 

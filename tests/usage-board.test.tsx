@@ -2,7 +2,7 @@ import type { On } from 'claude-code'
 import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 
-import { MASCOT_ROWS, MASCOT_WIDTH, mascot } from '../hooks/mascot'
+import { INK, MASCOT_ROWS, MASCOT_WIDTH, cells, mascot } from '../hooks/mascot'
 import {
   compact,
   level,
@@ -91,18 +91,32 @@ test('moods follow load', () => {
   expect(moodOf([10], false, 0)).toBe('idle')
 })
 
-test('every mascot frame fits its box', () => {
+test('every mascot frame fits its box and draws only known inks', () => {
   for (const mood of ['idle', 'working', 'sleeping', 'alarm'] as const) {
     for (let frame = 0; frame < 300; frame++) {
       const pose = mascot(mood, frame)
-      expect(pose.lines.length).toBe(MASCOT_ROWS)
-      for (const line of pose.lines) expect(line.length).toBe(MASCOT_WIDTH)
-      expect(pose.caption.length <= MASCOT_WIDTH).toBe(true)
-      for (const ch of [...pose.lines, pose.caption].join('')) {
-        expect(/[ -~♥♪·]/.test(ch), `${mood} ${frame} char ${ch}`).toBe(true)
-      }
+      const rows = cells(pose.pixels)
+      const isDrawable =
+        pose.pixels.length === MASCOT_ROWS * 2 &&
+        pose.pixels.every(row => row.length === MASCOT_WIDTH && [...row].every(p => p === '.' || p in INK)) &&
+        rows.length === MASCOT_ROWS &&
+        rows.every(runs => runs.map(r => r.text).join('').length === MASCOT_WIDTH)
+      expect(isDrawable, `${mood} ${frame}\n${pose.pixels.join('\n')}`).toBe(true)
+      expect(pose.caption.length <= MASCOT_WIDTH && /^[ -~]*$/.test(pose.caption), `${mood} ${frame} caption`).toBe(true)
     }
   }
+})
+
+test('half blocks put the top pixel in front and the bottom behind', () => {
+  const [row] = cells(['.OOG', '.LO.'])
+  expect(row).toEqual([
+    { text: ' ' },
+    { text: '▀', color: INK.O, backgroundColor: INK.L },
+    { text: '█', color: INK.O },
+    { text: '▀', color: INK.G },
+  ])
+  // Like cells merge into one run.
+  expect(cells(['OO', 'OO'])[0]).toEqual([{ text: '██', color: INK.O }])
 })
 
 const ran = (stdout: unknown) => ({

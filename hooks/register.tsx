@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, RenderNode } from 'claude-code'
 
 import type { Context, Git, Limit, Tab, Tokens, Totals } from '../types'
-import { MASCOT_TICK_MS, MASCOT_WIDTH, mascot } from './mascot'
+import { MASCOT_ROWS, MASCOT_TICK_MS, MASCOT_WIDTH, cells, mascot } from './mascot'
 import type { Mood } from './mascot'
 
 const SLEEP_MS = 5 * 60_000
@@ -12,17 +12,21 @@ const PANEL_MIN = 48
 // At or above this the two content columns sit side by side; below, they stack.
 const WIDE = 110
 const GAP = 2
+// The rule between the side-by-side columns: a space, the line, a space.
+const DIVIDER = 3
 const LEFT_SHARE = 0.58
 const MASCOT_COL = MASCOT_WIDTH + GAP
 const LABEL = 7
 const NO_NODE = 'Node.js not found on PATH'
 
-const ARC = '#00E5FF'
-const OK = '#22C55E'
-const WARM = '#EAB308'
-const HOT = '#F97316'
-const CRIT = '#EF4444'
-const FUR = '#FFB3D1'
+// Periwinkle sits opposite the cat's orange, so neither fights the gauges.
+const ACCENT = '#A5B4FC'
+const ON_ACCENT = '#1E1B4B'
+const LABEL_INK = '#94A3B8'
+const OK = '#4ADE80'
+const WARM = '#FACC15'
+const HOT = '#FB923C'
+const CRIT = '#F87171'
 
 const totals = atom({ plugin: 'usage-board', key: 'totals' } as const, null)
 const limits = atom({ plugin: 'usage-board', key: 'limits' } as const, [])
@@ -76,7 +80,7 @@ export const level = (percent: number) =>
 export const meter = (percent: number, width: number) => {
   const n = Math.round((Math.min(100, Math.max(0, percent)) / 100) * width)
 
-  return { filled: '▰'.repeat(n), empty: '▱'.repeat(Math.max(0, width - n)) }
+  return { filled: '━'.repeat(n), empty: '━'.repeat(Math.max(0, width - n)) }
 }
 
 export const spark = (values: number[]) => {
@@ -313,8 +317,8 @@ export const register: Register = on => {
     const columns = e.props.bodyColumns
     const isWide = columns >= WIDE
     const area = columns - MASCOT_COL
-    const leftW = isWide ? Math.floor((area - GAP) * LEFT_SHARE) : area
-    const rightW = isWide ? area - GAP - leftW : area
+    const leftW = isWide ? Math.floor((area - DIVIDER) * LEFT_SHARE) : area
+    const rightW = isWide ? area - DIVIDER - leftW : area
     const pose = mascot(
       moodOf(
         [window?.percent ?? 0, ...windows.map(l => l.percentUsed)],
@@ -334,18 +338,30 @@ export const register: Register = on => {
           if (id === 'git') void refreshGit($)
         }}
       >
-        <Text bold={active === id} color={active === id ? ARC : undefined} dimColor={active !== id}>
-          {label}
+        <Text
+          bold={active === id}
+          color={active === id ? ON_ACCENT : LABEL_INK}
+          backgroundColor={active === id ? ACCENT : undefined}
+        >
+          {` ${label} `}
         </Text>
       </Button>
     )
 
-    // A coloured label, then whatever the row says.
+    // A muted label, then whatever the row says.
     const labelled = (label: string, ...children: RenderNode[]) => (
       <Box>
-        <Text color={ARC}>{label.padEnd(LABEL)}</Text>
+        <Text color={LABEL_INK}>{label.padEnd(LABEL)}</Text>
         {children}
       </Box>
+    )
+
+    // The heading over a column.
+    const section = (title: string, note = '') => (
+      <Text wrap="truncate-end">
+        <Text bold color={ACCENT}>{title}</Text>
+        <Text dimColor>{note === '' ? '' : `  ${note}`}</Text>
+      </Text>
     )
 
     const gauge = (label: string, percent: number, detail: string) => {
@@ -357,9 +373,9 @@ export const register: Register = on => {
 
       return (
         <Box key={label}>
-          <Text color={ARC}>{label.padEnd(LABEL)}</Text>
+          <Text color={LABEL_INK}>{label.padEnd(LABEL)}</Text>
           <Text color={c}>{filled}</Text>
-          <Text dimColor>{empty}</Text>
+          <Text color={LABEL_INK} dimColor>{empty}</Text>
           <Text bold color={c}>
             {`${Math.round(percent)}%`.padStart(5)}
           </Text>
@@ -373,10 +389,9 @@ export const register: Register = on => {
     // Dollars are an estimate at API list prices (scripts/prices.mjs), not a bill.
     const total = (label: string, tokens: Tokens, usd: number) => (
       <Text wrap="truncate-end">
-        <Text color={ARC}>{label.padEnd(LABEL)}</Text>
-        {`${compact(sumOf(tokens))} tok`.padStart(11)}
-        {'  '}
-        {dollars(usd)}
+        <Text color={LABEL_INK}>{label.padEnd(LABEL)}</Text>
+        <Text bold>{`${compact(sumOf(tokens))} tok`.padStart(11)}</Text>
+        <Text bold color={OK}>{dollars(usd).padStart(10)}</Text>
       </Text>
     )
 
@@ -448,7 +463,7 @@ export const register: Register = on => {
         <>
           {labelled(
             'HOURS',
-            <Text color={ARC}>{spark(hours)}</Text>,
+            <Text color={ACCENT}>{spark(hours)}</Text>,
             when(
               hasHours,
               <Text dimColor wrap="truncate-end">
@@ -459,15 +474,15 @@ export const register: Register = on => {
           <Text dimColor wrap="truncate-end">{`${' '.repeat(LABEL)}0     6     12    18    `}</Text>
           {labelled(
             'DAYS',
-            <Text color={ARC}>{spark(weekdays)}</Text>,
+            <Text color={ACCENT}>{spark(weekdays)}</Text>,
             <Text dimColor wrap="truncate-end">
               {hasHours
                 ? `  Mon→Sun · busiest ${DAYS[weekdays.indexOf(Math.max(...weekdays))]}`
                 : '  Mon→Sun'}
             </Text>,
           )}
-          {labelled('30D', <Text color={ARC}>{spark(days.map(d => d.tokens))}</Text>)}
-          {labelled('12MO', <Text color={ARC}>{spark(months.map(m => m.tokens))}</Text>)}
+          {labelled('30D', <Text color={ACCENT}>{spark(days.map(d => d.tokens))}</Text>)}
+          {labelled('12MO', <Text color={ACCENT}>{spark(months.map(m => m.tokens))}</Text>)}
         </>
         ),
         right: (
@@ -512,9 +527,9 @@ export const register: Register = on => {
       const counts = [
         { n: repo.staged, text: `+${repo.staged} staged`, color: OK },
         { n: repo.modified, text: `!${repo.modified} modified`, color: WARM },
-        { n: repo.untracked, text: `?${repo.untracked} untracked`, color: ARC },
+        { n: repo.untracked, text: `?${repo.untracked} untracked`, color: ACCENT },
         { n: repo.conflicted, text: `✖${repo.conflicted} conflicts`, color: CRIT },
-        { n: repo.stashes, text: `≡${repo.stashes} stash`, color: ARC },
+        { n: repo.stashes, text: `≡${repo.stashes} stash`, color: ACCENT },
       ]
       const ciColor =
         ci?.conclusion === 'success'
@@ -527,7 +542,7 @@ export const register: Register = on => {
         left: (
         <>
           <Text wrap="truncate-end">
-            <Text bold color={ARC}>
+            <Text bold color={ACCENT}>
               {repo.repo}
             </Text>
             <Text bold>{`   ${repo.branch}`}</Text>
@@ -610,34 +625,52 @@ export const register: Register = on => {
     })()
 
     const rows = { usage: usageRows, stats: statsRows, git: gitRows }[active]
+    const titles = {
+      usage: [section('LIMITS'), section('SPEND', 'est. at API prices')],
+      stats: [section('ACTIVITY'), section('RECORDS')],
+      git: [section('REPOSITORY'), section('GITHUB')],
+    }[active]
 
     return (
       <Box flexDirection="column" width={columns}>
         <Box width={columns}>
-          <Text color={ARC} dimColor>── </Text>
-          <Text bold color={ARC}>◢ USAGE-BOARD</Text>
-          {when(pose.caption !== '', <Text dimColor>{` · ${pose.caption}`}</Text>)}
+          <Text bold color={ACCENT}>◆ USAGE-BOARD</Text>
+          {when(pose.caption !== '', <Text italic color={LABEL_INK}>{`  ${pose.caption}`}</Text>)}
           <Box flexGrow={1} flexShrink={1}>
-            <Text color={ARC} dimColor wrap="truncate-end">{' ' + '─'.repeat(columns)}</Text>
+            <Text color={LABEL_INK} dimColor wrap="truncate-end">{' ' + '─'.repeat(columns)}</Text>
           </Box>
+          <Text> </Text>
           {tabButton('usage', '1', 'USAGE')}
           <Text> </Text>
           {tabButton('stats', '2', 'STATS')}
           <Text> </Text>
           {tabButton('git', '3', 'GIT')}
-          <Text color={ARC} dimColor> ──</Text>
         </Box>
         <Box>
           <Box flexDirection="column" width={MASCOT_COL} flexShrink={0}>
-            {pose.lines.map(line => (
-              <Text color={FUR} wrap="truncate-end">{line}</Text>
+            {cells(pose.pixels).map(runs => (
+              <Text wrap="truncate-end">
+                {runs.map(run => (
+                  <Text color={run.color} backgroundColor={run.backgroundColor}>{run.text}</Text>
+                ))}
+              </Text>
             ))}
           </Box>
-          <Box flexDirection={isWide ? 'row' : 'column'} columnGap={GAP} width={area}>
-            <Box flexDirection="column" width={leftW} flexShrink={0}>
+          <Box flexDirection={isWide ? 'row' : 'column'} width={area} minHeight={MASCOT_ROWS}>
+            <Box flexDirection="column" justifyContent="center" width={leftW} flexShrink={0}>
+              {titles[0]}
               {rows.left}
             </Box>
-            <Box flexDirection="column" width={rightW}>
+            {when(
+              isWide,
+              <Box flexDirection="column" width={DIVIDER} flexShrink={0} alignItems="center">
+                {Array.from({ length: MASCOT_ROWS }, () => (
+                  <Text color={LABEL_INK} dimColor>│</Text>
+                ))}
+              </Box>,
+            )}
+            <Box flexDirection="column" justifyContent="center" width={rightW} marginTop={isWide ? 0 : 1}>
+              {titles[1]}
               {rows.right}
             </Box>
           </Box>

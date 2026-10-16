@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- The mascot is now a pixel-art tabby drawn in coloured half blocks, with new idle acts (wave, groom, yarn, purr, dance), a laptop while working, a curled-up sleep and a bristled alarm.
+- The band has a new palette, pill-style tabs, a heading over each column, a divider between the columns, and its content centred beside the cat.
+- Gauges draw as a continuous line instead of segments.
+
 ## [0.2.1] - 2026-10-13
 
 ### Security

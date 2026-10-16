@@ -1,6 +1,6 @@
 {
   "name": "plimsoll",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "A HUD above the prompt: context, rate-limit and cost gauges, usage statistics, git and CI status, and an animated mascot",
   "author": { "name": "Akshit Bansal" },
   "homepage": "https://plimsoll.vercel.app",

@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-16
+
 ### Added
 - Releases: a `v*` tag publishes `Plimsoll-<version>.zip` with `SHA256SUMS.txt` and a build provenance attestation.
 - CI runs the price check, strict manifest validation and the tests on every push and pull request.

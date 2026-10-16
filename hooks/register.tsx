@@ -2,10 +2,10 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, RenderNode } from 'claude-code'
 
 import type { Context, Git, Limit, Tab, Tokens, Totals } from '../types'
-import { MASCOT_ROWS, MASCOT_TICK_MS, MASCOT_WIDTH, cells, mascot } from './mascot'
+import type { CatProps } from './cat'
+import { MASCOT_ROWS, MASCOT_WIDTH, cells, mascot } from './mascot'
 import type { Mood } from './mascot'
 
-const SLEEP_MS = 5 * 60_000
 // git.mjs has internal timeouts that add up to 41 s.
 const GIT_TIMEOUT_MS = 45_000
 const PANEL_MIN = 48
@@ -16,6 +16,8 @@ const GAP = 2
 const DIVIDER = 3
 const LEFT_SHARE = 0.58
 const MASCOT_COL = MASCOT_WIDTH + GAP
+// The cat's pixel rows and its caption line under them.
+const BODY_ROWS = MASCOT_ROWS + 1
 const LABEL = 7
 const NO_NODE = 'Node.js not found on PATH'
 
@@ -35,7 +37,6 @@ const context = atom({ plugin: 'usage-board', key: 'context' } as const, null)
 const git = atom({ plugin: 'usage-board', key: 'git' } as const, null)
 const tab = atom({ plugin: 'usage-board', key: 'tab' } as const, 'usage')
 const isHidden = atom({ plugin: 'usage-board', key: 'isHidden' } as const, false)
-const frame = atom({ plugin: 'usage-board', key: 'frame' } as const, 0)
 const activeAt = atom({ plugin: 'usage-board', key: 'activeAt' } as const, 0)
 
 const WINDOWS: Record<string, string> = {
@@ -91,15 +92,11 @@ export const spark = (values: number[]) => {
     .join('')
 }
 
-export const moodOf = (
-  percents: number[],
-  isWorking: boolean,
-  idleMs: number,
-): Mood => {
+// Sleep is the cat's own call: it counts quiet ticks itself (mascot.ts `settle`).
+export const moodOf = (percents: number[], isWorking: boolean): Mood => {
   if (percents.some(percent => level(percent) === CRIT)) return 'alarm'
-  if (isWorking) return 'working'
 
-  return idleMs > SLEEP_MS ? 'sleeping' : 'idle'
+  return isWorking ? 'working' : 'idle'
 }
 
 let isScanning = false
@@ -221,11 +218,6 @@ const measure = async (
   await showStatus($)
 }
 
-const tick = ($: EngineInterface) =>
-  quietly(async () => {
-    if (!(await read($, isHidden))) await update($, frame, n => n + 1)
-  })
-
 const readUsage = ($: EngineInterface) =>
   quietly(async () => measure($, await $.session.usage()))
 
@@ -241,9 +233,6 @@ export const register: Register = on => {
     }
     const now = await $.clock.now()
     await update($, activeAt, () => now)
-    $.clock.every(MASCOT_TICK_MS, () => {
-      void tick($)
-    })
     void scan($)
     void refreshGit($)
     void readUsage($)
@@ -303,14 +292,16 @@ export const register: Register = on => {
     // A band too narrow for the panel draws nothing rather than a broken one.
     if (e.props.bodyColumns < PANEL_MIN) return next(e)
 
-    const { Box, Text, Button } = $.ui.resolve(e)
+    const elements = $.ui.resolve(e)
+    const { Box, Text, Button } = elements
+    // Mobile and VS Code draw no Client: they get a still cat instead.
+    const Client = 'Client' in elements ? elements.Client : undefined
     const windows = await read($, limits)
     const scanned = await read($, totals)
     const failed = await read($, problem)
     const window = await read($, context)
     const repo = await read($, git)
     const active = await read($, tab)
-    const beat = await read($, frame)
     const lastActive = await read($, activeAt)
     const now = await $.clock.now()
 
@@ -319,14 +310,13 @@ export const register: Register = on => {
     const area = columns - MASCOT_COL
     const leftW = isWide ? Math.floor((area - DIVIDER) * LEFT_SHARE) : area
     const rightW = isWide ? area - DIVIDER - leftW : area
-    const pose = mascot(
-      moodOf(
+    const catProps: CatProps = {
+      mood: moodOf(
         [window?.percent ?? 0, ...windows.map(l => l.percentUsed)],
         e.props.isWorking,
-        now - lastActive,
       ),
-      beat,
-    )
+      activeAt: lastActive,
+    }
 
     const tabButton = (id: Tab, hotkey: string, label: string) => (
       <Button
@@ -634,29 +624,36 @@ export const register: Register = on => {
     return (
       <Box flexDirection="column" width={columns}>
         <Box width={columns}>
-          <Text bold color={ACCENT}>◆ USAGE-BOARD</Text>
-          {when(pose.caption !== '', <Text italic color={LABEL_INK}>{`  ${pose.caption}`}</Text>)}
+          <Box flexShrink={0}>
+            <Text bold color={ACCENT}>◆ USAGE-BOARD</Text>
+          </Box>
           <Box flexGrow={1} flexShrink={1}>
             <Text color={LABEL_INK} dimColor wrap="truncate-end">{' ' + '─'.repeat(columns)}</Text>
           </Box>
-          <Text> </Text>
-          {tabButton('usage', '1', 'USAGE')}
-          <Text> </Text>
-          {tabButton('stats', '2', 'STATS')}
-          <Text> </Text>
-          {tabButton('git', '3', 'GIT')}
+          <Box flexShrink={0}>
+            <Text> </Text>
+            {tabButton('usage', '1', 'USAGE')}
+            <Text> </Text>
+            {tabButton('stats', '2', 'STATS')}
+            <Text> </Text>
+            {tabButton('git', '3', 'GIT')}
+          </Box>
         </Box>
         <Box>
           <Box flexDirection="column" width={MASCOT_COL} flexShrink={0}>
-            {cells(pose.pixels).map(runs => (
-              <Text wrap="truncate-end">
-                {runs.map(run => (
-                  <Text color={run.color} backgroundColor={run.backgroundColor}>{run.text}</Text>
-                ))}
-              </Text>
-            ))}
+            {Client === undefined ? (
+              cells(mascot(catProps.mood, 0).pixels).map(runs => (
+                <Text wrap="truncate-end">
+                  {runs.map(run => (
+                    <Text color={run.color} backgroundColor={run.backgroundColor}>{run.text}</Text>
+                  ))}
+                </Text>
+              ))
+            ) : (
+              <Client key="cat" module="./cat.tsx" props={catProps} width={MASCOT_WIDTH} height={BODY_ROWS} />
+            )}
           </Box>
-          <Box flexDirection={isWide ? 'row' : 'column'} width={area} minHeight={MASCOT_ROWS}>
+          <Box flexDirection={isWide ? 'row' : 'column'} width={area} minHeight={BODY_ROWS}>
             <Box flexDirection="column" justifyContent="center" width={leftW} flexShrink={0}>
               {titles[0]}
               {rows.left}
@@ -664,7 +661,7 @@ export const register: Register = on => {
             {when(
               isWide,
               <Box flexDirection="column" width={DIVIDER} flexShrink={0} alignItems="center">
-                {Array.from({ length: MASCOT_ROWS }, () => (
+                {Array.from({ length: BODY_ROWS }, () => (
                   <Text color={LABEL_INK} dimColor>│</Text>
                 ))}
               </Box>,

@@ -3,12 +3,13 @@
 A heads-up display for [Claude Code](https://claude.com/claude-code), drawn in the band above the prompt.
 
 ```
-◆ USAGE-BOARD  hi! ─────────────────────────────────────────────  USAGE   STATS   GIT
-                          │ LIMITS                                  │ SPEND  est. at API prices
-   [ pixel-art tabby,     │ CTX    ━━━━━━━━━━━━━━  28%  276.7K used │ TODAY    43.6M tok    ~$8.86
-     6 rows tall, drawn   │ 5H     ━━━━━━━━━━━━━━  43%  resets 3h   │ WEEK     89.0M tok   ~$31.40
-     in coloured half     │ WEEK   ━━━━━━━━━━━━━━  56%  resets 1d   │ MONTH   427.3M tok  ~$142.10
-     blocks ]             │                                         │
+◆ USAGE-BOARD ────────────────────────────────────────────────────  USAGE   STATS   GIT
+                      │ LIMITS                                  │ SPEND  est. at API prices
+ [ pixel-art tabby,   │ CTX    ━━━━━━━━━━━━━━  28%  276.7K used │ TODAY    43.6M tok    ~$8.86
+   5 rows tall, in    │ 5H     ━━━━━━━━━━━━━━  43%  resets 3h   │ WEEK     89.0M tok   ~$31.40
+   coloured half      │ WEEK   ━━━━━━━━━━━━━━  56%  resets 1d   │ MONTH   427.3M tok  ~$142.10
+   blocks ]           │                                         │
+       ~ la la ~      │                                         │
 ```
 
 (The figures above are an illustration of the layout, not real output. The cat is drawn in colour with half-block characters, two square pixels per cell, so it does not survive being pasted as plain text.)
@@ -18,7 +19,8 @@ A heads-up display for [Claude Code](https://claude.com/claude-code), drawn in t
 - **Usage** — how full the context window is (tokens used and left), your 5-hour and weekly rate-limit windows with time to reset, and tokens plus estimated cost for today, this week and this month.
 - **Stats** — your peak hours, busiest weekday, the last 30 days and 12 months as sparklines, and your most active day, week and month.
 - **Git** — repository, branch, ahead/behind, staged/modified/untracked/conflict/stash counts, the last commit, the branch's pull request with review state and check counts, and the latest CI run.
-- **A mascot** — a pixel-art orange tabby that blinks, looks around, waves, grooms, bats at yarn, purrs and dances while idle, types at a laptop while Claude works, curls up asleep when you are away, and bristles when a gauge passes 90%. It needs a terminal with 24-bit colour to look right.
+- **A mascot** — a pixel-art orange tabby that blinks, looks around, waves, grooms, bats at yarn, purrs and dances while idle, types at a laptop while Claude works, curls up asleep when you are away, and bristles when a gauge passes 90%. Its caption sits under it. It needs a terminal with 24-bit colour to look right.
+- **Play with the cat** — point at it and it stops to watch the pointer; click it and it gets cross (`hey!`, then `mrrrow!`, then a hiss if you keep poking); press and drag across it to pet it and it purrs. The eyes follow the pointer only while it is over the cat, and hovering needs a terminal that reports mouse movement. Where a surface has no interactive regions (mobile, VS Code) the cat is drawn still.
 
 Gauges are green below 50%, yellow from 50%, orange from 75% and red from 90%.
 

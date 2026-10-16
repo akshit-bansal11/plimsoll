@@ -96,9 +96,7 @@ declare module 'claude-code' {
       git: Git | null
       tab: Tab
       isHidden: boolean
-      /** The mascot's animation frame, advanced by a timer. */
-      frame: number
-      /** When a turn last started or ended, epoch ms: the mascot sleeps long after it. */
+      /** When a turn last started or ended, epoch ms: a new value wakes the mascot. */
       activeAt: number
     }
   }

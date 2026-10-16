@@ -6,10 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- The cat is interactive: it watches a hovering pointer, gets crosser with each quick click (up to a hiss), and purrs when you press and drag across it to pet it.
+
 ### Changed
 - The mascot is now a pixel-art tabby drawn in coloured half blocks, with new idle acts (wave, groom, yarn, purr, dance), a laptop while working, a curled-up sleep and a bristled alarm.
 - The band has a new palette, pill-style tabs, a heading over each column, a divider between the columns, and its content centred beside the cat.
 - Gauges draw as a continuous line instead of segments.
+- The cat is smaller (20 columns, 5 rows) and its caption moved from the header to under it.
+- The title and tabs no longer wrap when the band is narrow.
+- The cat animates in its own region, so the rest of the band is no longer redrawn on every animation frame.
 
 ## [0.2.1] - 2026-10-13
 

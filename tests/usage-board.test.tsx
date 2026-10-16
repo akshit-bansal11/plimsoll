@@ -2,7 +2,20 @@ import type { On } from 'claude-code'
 import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 
-import { INK, MASCOT_ROWS, MASCOT_WIDTH, cells, mascot } from '../hooks/mascot'
+import {
+  INK,
+  MASCOT_ROWS,
+  MASCOT_TICK_MS,
+  MASCOT_WIDTH,
+  PLAY,
+  SLEEP_TICKS,
+  cells,
+  frameAt,
+  mascot,
+  react,
+  settle,
+} from '../hooks/mascot'
+import type { Play } from '../hooks/mascot'
 import {
   compact,
   level,
@@ -85,10 +98,52 @@ test('numbers, resets, levels and meters read as the band prints them', () => {
 })
 
 test('moods follow load', () => {
-  expect(moodOf([95], true, 0)).toBe('alarm')
-  expect(moodOf([10], true, 0)).toBe('working')
-  expect(moodOf([10], false, 6 * 60_000)).toBe('sleeping')
-  expect(moodOf([10], false, 0)).toBe('idle')
+  expect(moodOf([95], true)).toBe('alarm')
+  expect(moodOf([10], true)).toBe('working')
+  expect(moodOf([10], false)).toBe('idle')
+})
+
+test('an idle cat falls asleep when nobody is about, and a touch wakes it', () => {
+  expect(settle('idle', SLEEP_TICKS, 0, PLAY)).toBe('idle')
+  expect(settle('idle', SLEEP_TICKS + 1, 0, PLAY)).toBe('sleeping')
+  expect(settle('idle', SLEEP_TICKS + 1, 1, PLAY)).toBe('idle')
+  expect(settle('working', SLEEP_TICKS * 2, 0, PLAY)).toBe('working')
+  const touched = react(PLAY, { type: 'down', x: 1, y: 1, button: 'left' }, 1)
+  expect(settle('idle', SLEEP_TICKS + 1, 0, touched)).toBe('idle')
+})
+
+const poke = (p: Play, t: number) =>
+  react(
+    react(p, { type: 'down', x: 8, y: 2, button: 'left' }, t),
+    { type: 'up', x: 8, y: 2, button: 'left' },
+    t,
+  )
+
+test('quick pokes build to a hiss, then the grudge fades', () => {
+  const once = poke(PLAY, 10)
+  expect(frameAt('idle', 10, once).caption).toBe('hey!')
+  const thrice = poke(poke(once, 11), 12)
+  expect(frameAt('idle', 12, thrice).caption).toBe('HSSSS!')
+  expect(frameAt('idle', 100, thrice).caption === 'HSSSS!').toBe(false)
+  // A poke long after the last starts over at the mildest.
+  expect(frameAt('idle', 100, poke(thrice, 100)).caption).toBe('hey!')
+})
+
+test('a held drag pets instead of poking', () => {
+  let p = react(PLAY, { type: 'down', x: 2, y: 2, button: 'left' }, 20)
+  p = react(p, { type: 'move', x: 5, y: 2, button: 'left' }, 20)
+  p = react(p, { type: 'up', x: 5, y: 2, button: 'left' }, 21)
+  expect(frameAt('idle', 21, p).caption).toBe('purrrr...')
+  expect(p.anger).toBe(0)
+})
+
+test('a hovering pointer is watched, and forgotten when it leaves', () => {
+  const at = (x: number) => react(PLAY, { type: 'move', x, y: 2 }, 30)
+  const left = frameAt('idle', 30, at(0))
+  const right = frameAt('idle', 30, at(MASCOT_WIDTH - 1))
+  expect(left.caption).toBe('?')
+  expect(left.pixels.join('') === right.pixels.join('')).toBe(false)
+  expect(react(at(0), { type: 'leave', x: 0, y: 2 }, 31).gaze).toBeUndefined()
 })
 
 test('every mascot frame fits its box and draws only known inks', () => {
@@ -223,6 +278,16 @@ test('the band shows usage, stats and git, and hides on command', async ($, on) 
     expect(await shown.find({ text: /USAGE-BOARD/ })).toBeDefined()
     await shown.unmount()
   }
+})
+
+test('the cat in the band answers a poke', async ($, on) => {
+  const { mountBand } = await boot($, on)
+  const ui = await mountBand('terminal', 140)
+  await ui.advance(MASCOT_TICK_MS)
+  await ui.pointer({ type: 'down', x: 8, y: 2, button: 'left', in: 'cat' })
+  await ui.pointer({ type: 'up', x: 8, y: 2, button: 'left', in: 'cat' })
+  expect(await ui.find({ text: /hey!/, in: 'cat' })).toBeDefined()
+  await ui.unmount()
 })
 
 test('the columns stack below 110 and keep every figure', async ($, on) => {

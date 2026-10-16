@@ -24,15 +24,15 @@ const HOT = '#F97316'
 const CRIT = '#EF4444'
 const FUR = '#FFB3D1'
 
-const totals = atom({ plugin: 'usage-board', key: 'totals' } as const, null)
-const limits = atom({ plugin: 'usage-board', key: 'limits' } as const, [])
-const problem = atom({ plugin: 'usage-board', key: 'problem' } as const, null)
-const context = atom({ plugin: 'usage-board', key: 'context' } as const, null)
-const git = atom({ plugin: 'usage-board', key: 'git' } as const, null)
-const tab = atom({ plugin: 'usage-board', key: 'tab' } as const, 'usage')
-const isHidden = atom({ plugin: 'usage-board', key: 'isHidden' } as const, false)
-const frame = atom({ plugin: 'usage-board', key: 'frame' } as const, 0)
-const activeAt = atom({ plugin: 'usage-board', key: 'activeAt' } as const, 0)
+const totals = atom({ plugin: 'plimsoll', key: 'totals' } as const, null)
+const limits = atom({ plugin: 'plimsoll', key: 'limits' } as const, [])
+const problem = atom({ plugin: 'plimsoll', key: 'problem' } as const, null)
+const context = atom({ plugin: 'plimsoll', key: 'context' } as const, null)
+const git = atom({ plugin: 'plimsoll', key: 'git' } as const, null)
+const tab = atom({ plugin: 'plimsoll', key: 'tab' } as const, 'usage')
+const isHidden = atom({ plugin: 'plimsoll', key: 'isHidden' } as const, false)
+const frame = atom({ plugin: 'plimsoll', key: 'frame' } as const, 0)
+const activeAt = atom({ plugin: 'plimsoll', key: 'activeAt' } as const, 0)
 
 const WINDOWS: Record<string, string> = {
   five_hour: '5H',
@@ -615,7 +615,7 @@ export const register: Register = on => {
       <Box flexDirection="column" width={columns}>
         <Box width={columns}>
           <Text color={ARC} dimColor>── </Text>
-          <Text bold color={ARC}>◢ USAGE-BOARD</Text>
+          <Text bold color={ARC}>◢ PLIMSOLL</Text>
           {when(pose.caption !== '', <Text dimColor>{` · ${pose.caption}`}</Text>)}
           <Box flexGrow={1} flexShrink={1}>
             <Text color={ARC} dimColor wrap="truncate-end">{' ' + '─'.repeat(columns)}</Text>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Plimsoll">
+  <path d="M19 48a29 29 0 0 0 58 0z" fill="#0068d6"/>
+  <circle cx="48" cy="48" r="32" fill="none" stroke="#16171a" stroke-width="7"/>
+  <rect x="2" y="44.5" width="92" height="7" rx="3.5" fill="#16171a"/>
+</svg>

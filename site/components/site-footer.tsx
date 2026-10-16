@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PlimsollMark } from "@/components/icons/mark";
 import { REPO } from "@/lib/nav";
 
 const LINK =
@@ -10,7 +11,10 @@ export function SiteFooter() {
     <footer className="border-line mt-16 border-t">
       <div className="mx-auto flex max-w-[90rem] flex-col gap-4 px-4 py-8 text-[0.9375rem] md:flex-row md:items-center md:justify-between md:px-6">
         <div>
-          <p className="text-lg font-black">Plimsoll</p>
+          <p className="flex items-center gap-2 text-lg font-black">
+            <PlimsollMark className="size-6" />
+            Plimsoll
+          </p>
           <p className="text-dim mt-1">
             MIT licensed. The version, prices and band mock-up here are read from the
             repository at build time.

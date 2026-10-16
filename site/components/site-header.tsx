@@ -1,6 +1,7 @@
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import { GithubMark } from "@/components/icons/github";
+import { PlimsollMark } from "@/components/icons/mark";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { NAV, REPO } from "@/lib/nav";
@@ -67,6 +68,7 @@ export function SiteHeader({ variant = "landing" }: { variant?: "landing" | "doc
             href="/"
             className="flex min-h-11 items-center gap-2 rounded-lg text-xl font-black tracking-[-0.01em]"
           >
+            <PlimsollMark className="size-7" />
             Plimsoll
             {docs ? (
               <span className="text-dim hidden text-[0.9375rem] font-bold sm:inline">

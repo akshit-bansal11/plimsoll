@@ -51,8 +51,16 @@ export const REPO = "https://github.com/akshit-bansal11/plimsoll";
 export const LATEST_RELEASE = `${REPO}/releases/latest`;
 
 /** The site's one origin. Canonical links, the sitemap and robots.txt all resolve against it. */
-export const SITE = "https://plimsoll.vercel.app";
+export const SITE = "https://plimsoll.akshitbansal.me";
 
 /** The two lines that install it, exactly as the README gives them. */
 export const INSTALL_COMMANDS =
   "/plugin marketplace add akshit-bansal11/plimsoll\n/plugin install plimsoll@plimsoll";
+
+/** The card a shared link unfurls into: assets/social-preview.png, 1280×640. */
+export const SOCIAL_IMAGE = {
+  url: "/social-preview.png",
+  width: 1280,
+  height: 640,
+  alt: "Plimsoll: know how close you are to the line. A usage HUD for Claude Code: context, rate limits, estimated cost, stats and git, right above the prompt.",
+};

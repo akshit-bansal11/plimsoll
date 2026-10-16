@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <title>Plimsoll</title>
+  <style>
+    .ink { fill: #16171a; }
+    .ring { fill: none; stroke: #16171a; }
+    .acc { fill: #0068d6; }
+    @media (prefers-color-scheme: dark) {
+      .ink { fill: #f2f3f5; }
+      .ring { stroke: #f2f3f5; }
+      .acc { fill: #4da3ff; }
+    }
+  </style>
+  <path class="acc" d="M19 48a29 29 0 0 0 58 0z"/>
+  <circle class="ring" cx="48" cy="48" r="32" stroke-width="7"/>
+  <rect class="ink" x="2" y="44.5" width="92" height="7" rx="3.5"/>
+</svg>

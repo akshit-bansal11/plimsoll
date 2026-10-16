@@ -5,6 +5,7 @@ import { ReferenceSections } from "@/components/sections/reference";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Toc } from "@/components/toc";
+import { SOCIAL_IMAGE } from "@/lib/nav";
 import { loadPrices, loadVersion } from "@/lib/repo";
 
 const TITLE = "Plimsoll — documentation";
@@ -12,7 +13,7 @@ const DESCRIPTION =
   "Plimsoll documentation on one page: install, use, how each number on the band is computed, known limits, uninstall, and the developer guide.";
 
 // A page's openGraph replaces the layout's whole object rather than merging into it,
-// hence type and site name again here.
+// hence type, site name and image again here.
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
@@ -23,6 +24,7 @@ export const metadata: Metadata = {
     type: "website",
     url: "/docs",
     siteName: "Plimsoll",
+    images: [SOCIAL_IMAGE],
   },
 };
 

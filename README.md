@@ -17,7 +17,7 @@ A ship's Plimsoll line is painted on the hull to show how deep it may safely sit
 [![CI](https://github.com/akshit-bansal11/plimsoll/actions/workflows/ci.yml/badge.svg)](https://github.com/akshit-bansal11/plimsoll/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/akshit-bansal11/plimsoll)](https://github.com/akshit-bansal11/plimsoll/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Documentation](https://img.shields.io/badge/docs-plimsoll.vercel.app-black.svg)](https://plimsoll.vercel.app/docs)
+[![Documentation](https://img.shields.io/badge/docs-plimsoll.akshitbansal.me-black.svg)](https://plimsoll.akshitbansal.me/docs)
 
 ## What it shows
 
@@ -118,7 +118,7 @@ claude --plugin-dir /path/to/plimsoll       # run it from disk
 - `hooks/mascot.ts` — the kitten's frames.
 - `scripts/scan.mjs` — sums the transcripts; `scripts/cache.mjs` names its cache; `scripts/prices.mjs` holds the price table.
 - `scripts/git.mjs` — reads git and `gh`.
-- `site/` — the [website and documentation](https://plimsoll.vercel.app); see [site/README.md](site/README.md).
+- `site/` — the [website and documentation](https://plimsoll.akshitbansal.me); see [site/README.md](site/README.md).
 
 ## Releases
 

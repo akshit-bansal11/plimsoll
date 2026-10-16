@@ -51,7 +51,7 @@ export const REPO = "https://github.com/akshit-bansal11/plimsoll";
 export const LATEST_RELEASE = `${REPO}/releases/latest`;
 
 /** The site's one origin. Canonical links, the sitemap and robots.txt all resolve against it. */
-export const SITE = "https://plimsoll.vercel.app";
+export const SITE = "https://plimsoll.akshitbansal.me";
 
 /** The two lines that install it, exactly as the README gives them. */
 export const INSTALL_COMMANDS =

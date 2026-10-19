@@ -13,6 +13,7 @@ import { INSTALL_COMMANDS } from "@/lib/nav";
 const ACTIONS: { action: string; how: string }[] = [
   { action: "Hide or show the HUD", how: "/hud (or /hud hide, /hud show)" },
   { action: "Switch tab", how: "/hud usage, /hud stats, /hud git" },
+  { action: "Pause or restart the kitten", how: "/hud still" },
   {
     action: "Collapse the band",
     how: "ctrl+x ctrl+a (Claude Code's own shortcut for the band)",
@@ -36,8 +37,12 @@ export function GuideSections() {
         <Sub>Requirements</Sub>
         <ul className="max-w-[68ch] list-disc space-y-2 pl-5 text-base leading-relaxed">
           <li>
-            <strong>Node.js</strong> on your <C>PATH</C>. The plugin starts it to read
-            the transcripts and to run git.
+            <strong>Claude Code</strong> with plugin mods. CI tests against 2.1.301; the
+            mod API is early access, so a much newer or older release may not load it.
+          </li>
+          <li>
+            <strong>Node.js 20.1 or later</strong> on your <C>PATH</C>. The plugin
+            starts it to read the transcripts and to run git.
           </li>
           <li>
             <strong>git</strong>, for the git tab.
@@ -61,11 +66,9 @@ export function GuideSections() {
           }
         />
         <P>
-          The first scan after the update copies the old cache from{" "}
-          <C>&lt;config dir&gt;/usage-board/</C> to <C>&lt;config dir&gt;/plimsoll/</C>{" "}
-          when the new one does not exist yet, so no transcript is read again. Whether
-          the HUD was hidden is stored under the plugin&apos;s name, so it resets once:
-          run <C>/hud hide</C> again if it was.
+          The first scan reads every transcript once. Whether the HUD was hidden is
+          stored under the plugin&apos;s name, so it resets once: run <C>/hud hide</C>{" "}
+          again if it was.
         </P>
       </Section>
 
@@ -95,7 +98,7 @@ export function GuideSections() {
         <P>
           <C>/hud</C> alone toggles between hidden and shown. A tab name shows the HUD
           if it was hidden. Anything else answers with the usage line,{" "}
-          <C>/hud [usage|stats|git|hide|show]</C>.
+          <C>/hud [usage|stats|git|hide|show|still]</C>.
         </P>
         <P>
           While hidden, a one-line summary stays in the status line: each rate-limit

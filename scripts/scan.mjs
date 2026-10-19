@@ -6,21 +6,19 @@
 // Run by hooks/register.tsx through node: a hooks module cannot read files
 // over 4 MiB itself, and transcripts run to tens of megabytes.
 import {
-  constants,
-  copyFileSync,
   createReadStream,
-  existsSync,
   mkdirSync,
   readFileSync,
   readdirSync,
   renameSync,
   statSync,
+  unlinkSync,
   writeFileSync,
 } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { createInterface } from 'node:readline'
-import { adoptOldCache, cachePaths } from './cache.mjs'
+import { cachePaths } from './cache.mjs'
 import { costOf } from './prices.mjs'
 
 const configDir = process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude')
@@ -76,12 +74,6 @@ const sumFile = async path => {
   return hours
 }
 
-try {
-  adoptOldCache(paths, { constants, copyFileSync, existsSync, mkdirSync })
-} catch {
-  // a failed copy only costs one full scan
-}
-
 let cache = {}
 try {
   cache = JSON.parse(readFileSync(cachePath, 'utf8'))
@@ -104,6 +96,24 @@ try {
 // ponytail: the first run reads every transcript once; later runs only the changed files
 const stats = { hours: Array(24).fill(0), weekdays: Array(7).fill(0) }
 const byDay = new Map()
+// write then rename: a concurrent session never reads a half-written cache
+const saveCache = entries => {
+  const tmp = `${cachePath}.${process.pid}`
+  try {
+    mkdirSync(dirname(cachePath), { recursive: true })
+    writeFileSync(tmp, JSON.stringify(entries))
+    renameSync(tmp, cachePath)
+  } catch {
+    // the cache only saves time: the totals are right without it
+    try {
+      unlinkSync(tmp)
+    } catch {}
+  }
+}
+// A first scan of a long history can outlive the HUD's timeout: saving as it goes
+// means the next run picks up where this one was stopped.
+const SAVE_EVERY_MS = 10_000
+let savedAt = Date.now()
 for (const name of names) {
   if (!name.endsWith('.jsonl')) continue
   const path = join(root, name)
@@ -116,6 +126,10 @@ for (const name of names) {
     continue // a file removed mid-scan is skipped
   }
   kept[path] = { mtimeMs, size, hours }
+  if (Date.now() - savedAt > SAVE_EVERY_MS) {
+    saveCache({ ...cache, ...kept })
+    savedAt = Date.now()
+  }
   for (const [key, counts] of Object.entries(hours)) {
     const day = key.slice(0, 10)
     if (day === today) add(totals.today, counts)
@@ -158,21 +172,12 @@ stats.peakDay = peak(byDay)
 stats.peakWeek = peak(byWeek)
 stats.peakMonth = peak(byMonth)
 
-try {
-  mkdirSync(dirname(cachePath), { recursive: true })
-  // write then rename: a concurrent session never reads a half-written cache
-  const tmp = `${cachePath}.${process.pid}`
-  writeFileSync(tmp, JSON.stringify(kept))
-  renameSync(tmp, cachePath)
-} catch {
-  // the cache only saves time: the totals are right without it
-}
+saveCache(kept) // drops files that no longer exist
 
 const cents = x => Math.round(x * 100) / 100
 const named = ([input, output, cacheWrite, cacheRead]) => ({ input, output, cacheWrite, cacheRead })
 console.log(
   JSON.stringify({
-    tzOffset: now.getTimezoneOffset(),
     today: named(totals.today),
     week: named(totals.week),
     month: named(totals.month),

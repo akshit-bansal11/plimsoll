@@ -1,10 +1,11 @@
-// Anthropic API list prices in US dollars per million tokens, as of 2026-10-06.
+// Anthropic API list prices in US dollars per million tokens, as of 2026-10-20.
 // Used to ESTIMATE cost from transcript tokens: a subscription is not billed
 // this way. Update the table when prices change.
 
 // [model id prefix, input $/MTok, output $/MTok, cache-read multiplier of input]
 // Order matters: a longer prefix must be listed before a shorter one it starts
-// with (claude-opus-5-5 before claude-opus-5), the first match wins.
+// with (claude-opus-5-5 before claude-opus-5, claude-opus-4-1 before claude-opus-4),
+// the first match wins.
 const PRICES = [
   ['claude-fable-5-1', 10, 50, 0.025],
   ['claude-mythos-5-1', 10, 50, 0.025],
@@ -15,28 +16,43 @@ const PRICES = [
   ['claude-opus-4-8', 5, 25, 0.1],
   ['claude-opus-4-7', 5, 25, 0.1],
   ['claude-opus-4-6', 5, 25, 0.1],
-  ['claude-sonnet-5-5', 2, 10, 0.1],
+  ['claude-opus-4-5', 5, 25, 0.1],
+  ['claude-opus-4-1', 15, 75, 0.1],
+  ['claude-opus-4', 15, 75, 0.1],
+  ['claude-sonnet-5-5', 2, 10, 0.05],
   ['claude-sonnet-5', 2, 10, 0.1],
   ['claude-sonnet-4-6', 3, 15, 0.1],
+  ['claude-sonnet-4-5', 3, 15, 0.1],
+  ['claude-sonnet-4', 3, 15, 0.1],
   ['claude-haiku-5-5', 0.1, 0.5, 0.1],
   ['claude-haiku-4-5', 1, 5, 0.1],
+  ['claude-3-5-haiku', 0.8, 4, 0.1],
 ]
 const WRITE_5M = 1.25
 const WRITE_1H = 2
+// Claude Haiku 5.5 charges 5x every price for a request whose prompt (input plus cache reads
+// and writes) is over 100,000 tokens. Not a PRICES row: the site parses those rows.
+const LONG_PROMPT = { prefix: 'claude-haiku-5-5', over: 100_000, times: 5 }
 
 export const costOf = (model, usage) => {
-  const row = PRICES.find(([prefix]) => String(model).startsWith(prefix))
+  // Bedrock (us.anthropic.claude-opus-4-1-...) and Vertex (claude-sonnet-4-5@...) ids carry a prefix
+  const id = String(model)
+  const at = id.indexOf('claude-')
+  const key = at > 0 ? id.slice(at) : id
+  const row = PRICES.find(([prefix]) => key.startsWith(prefix))
   if (!row) return 0 // an unknown model adds nothing rather than a guessed price
   const [, input, output, readMultiplier] = row
   // usage.cache_creation splits the write by lifetime when present; without it every written token is 5-minute
   const write1h = usage.cache_creation?.ephemeral_1h_input_tokens ?? 0
   const write5m = Math.max(0, (usage.cache_creation_input_tokens ?? 0) - write1h)
-  return (
+  const usd =
     ((usage.input_tokens ?? 0) * input +
       (usage.output_tokens ?? 0) * output +
       (usage.cache_read_input_tokens ?? 0) * input * readMultiplier +
       write5m * input * WRITE_5M +
       write1h * input * WRITE_1H) /
     1e6
-  )
+  const prompt =
+    (usage.input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0) + (usage.cache_creation_input_tokens ?? 0)
+  return key.startsWith(LONG_PROMPT.prefix) && prompt > LONG_PROMPT.over ? usd * LONG_PROMPT.times : usd
 }

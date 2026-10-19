@@ -24,7 +24,7 @@ const mono = JetBrains_Mono({
 
 const TITLE = "Plimsoll — a usage HUD for Claude Code";
 const DESCRIPTION =
-  "Plimsoll draws a heads-up display above the Claude Code prompt: context window, rate limits, estimated cost, usage statistics and git status. Read from your own machine; nothing is sent anywhere. MIT.";
+  "Plimsoll draws a heads-up display above the Claude Code prompt: context window, rate limits, estimated cost, usage statistics and git status. Read from your own machine; only gh talks to GitHub. MIT.";
 
 export const metadata: Metadata = {
   // Every relative URL in metadata (Open Graph, canonical) resolves against this.
@@ -61,6 +61,16 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      {/* Without JavaScript, motion never animates the blocks in: show them as they are. */}
+      <head>
+        <noscript>
+          <style>
+            {
+              ".blur-fade{opacity:1!important;filter:none!important;transform:none!important}"
+            }
+          </style>
+        </noscript>
+      </head>
       <body className={`${mono.variable} ${sans.variable} font-sans`}>
         <ThemeProvider
           attribute="class"

@@ -48,7 +48,6 @@ export const ALL_NAV_IDS: string[] = NAV.flatMap((group) =>
 );
 
 export const REPO = "https://github.com/akshit-bansal11/plimsoll";
-export const LATEST_RELEASE = `${REPO}/releases/latest`;
 
 /** The site's one origin. Canonical links, the sitemap and robots.txt all resolve against it. */
 export const SITE = "https://plimsoll.akshitbansal.dev";

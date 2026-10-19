@@ -11,13 +11,12 @@ import {
   spark,
   untilReset,
 } from '../hooks/register'
-import { adoptOldCache, cachePaths } from '../scripts/cache.mjs'
+import { cachePaths } from '../scripts/cache.mjs'
 import type { Git, Totals } from '../types'
 
 const NOW = Date.parse('2026-10-11T10:00:00Z')
 const day = (key: string, tokens: number) => ({ key, tokens })
 const SCAN: Totals = {
-  tzOffset: 0,
   today: { input: 1000, output: 500, cacheWrite: 0, cacheRead: 0 },
   week: { input: 0, output: 0, cacheWrite: 0, cacheRead: 2_500_000 },
   month: { input: 0, output: 0, cacheWrite: 0, cacheRead: 3_000_000_000 },
@@ -182,10 +181,12 @@ test('the band shows usage, stats and git, and hides on command', async ($, on) 
     const ui = await mountBand(surface, 140)
     for (const re of [
       /48%/, /96\.0K used/, /104\.0K left/, /41%/, /resets 2h 14m/, /93%/,
-      /1\.5K tok/, /~\$3\.25/, /~\$12\.50/, /~\$48\.75/,
+      /1\.5K tok/, /~\$3\.25 API/, /~\$12\.50 API/, /~\$48\.75 API/, /\+2\.5M cache/,
     ]) {
       expect(await ui.find({ text: re }), `${surface} usage ${re}`).toBeDefined()
     }
+    // The weekly window is at 92.5% in the fixture: only the context and 5-hour windows panic the kitten.
+    expect(await ui.find({ text: /LIMIT/ }), `${surface} no panic`).toBeUndefined()
     await ui.press({ key: 'tab-stats' })
     for (const re of [/peak 14:00/, /busiest Wed/, /2026-10-02/]) {
       expect(await ui.find({ text: re }), `${surface} stats ${re}`).toBeDefined()
@@ -245,34 +246,7 @@ test('a directory outside any repository says so', async ($, on) => {
   await ui.unmount()
 })
 
-test('the scan cache carries over from usage-board once, and never over a newer one', () => {
-  const files = new Map<string, string>()
-  const dirs: string[] = []
-  const fs = {
-    constants: { COPYFILE_EXCL: 1 },
-    existsSync: (path: string) => files.has(path),
-    mkdirSync: (path: string) => void dirs.push(path),
-    copyFileSync: (from: string, to: string, mode: number) => {
-      expect(mode).toBe(1)
-      files.set(to, files.get(from) ?? '')
-    },
-  }
+test('the scan cache lives under the config folder, under the plugin name', () => {
   const paths = cachePaths('/cfg', (...parts: string[]) => parts.join('/'))
-  expect(paths).toEqual({
-    dir: '/cfg/plimsoll',
-    file: '/cfg/plimsoll/scan-cache-2.json',
-    old: '/cfg/usage-board/scan-cache-2.json',
-  })
-
-  expect(adoptOldCache(paths, fs)).toBe(false) // neither exists: nothing to copy
-
-  files.set(paths.old, 'old')
-  expect(adoptOldCache(paths, fs)).toBe(true)
-  expect(files.get(paths.file)).toBe('old')
-  expect(files.get(paths.old)).toBe('old') // copied, not moved
-  expect(dirs).toEqual(['/cfg/plimsoll'])
-
-  files.set(paths.file, 'new')
-  expect(adoptOldCache(paths, fs)).toBe(false)
-  expect(files.get(paths.file)).toBe('new')
+  expect(paths).toEqual({ dir: '/cfg/plimsoll', file: '/cfg/plimsoll/scan-cache-3.json' })
 })

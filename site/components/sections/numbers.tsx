@@ -114,8 +114,9 @@ export function NumbersSections({ prices }: { prices: PriceTable }) {
             final on the last, so the last row of each id is the one counted.
           </li>
           <li>
-            A token total is all four kinds added together: input, output, cache writes
-            and cache reads.
+            The band&apos;s totals count input and output tokens; cache writes and reads
+            are shown beside them as <C>+N cache</C>, because cache reads re-bill the
+            same prompt every turn. The statistics add all four kinds together.
           </li>
         </ul>
         <Sub>Periods</Sub>
@@ -129,10 +130,12 @@ export function NumbersSections({ prices }: { prices: PriceTable }) {
         <Sub>The cache</Sub>
         <P>
           Each transcript&apos;s per-hour sums are kept in{" "}
-          <C>&lt;config dir&gt;/plimsoll/scan-cache-2.json</C>, keyed by path. A file
+          <C>&lt;config dir&gt;/plimsoll/scan-cache-3.json</C>, keyed by path. A file
           whose modification time and size have not changed is not read again, so only
           the first scan reads everything. The cache is written to a temporary file and
-          renamed into place, so a second session never reads half of one.
+          renamed into place, so a second session never reads half of one. A long first
+          scan saves its progress every 10 seconds, so if it is stopped, the next scan
+          carries on from there.
         </P>
         <Note label="Counted twice">
           Message ids are de-duplicated within a file, not across files, so a transcript
@@ -143,12 +146,15 @@ export function NumbersSections({ prices }: { prices: PriceTable }) {
       <Section
         id="cost"
         title="Estimated cost"
-        lede="An estimate at Anthropic API list prices, shown with a ~. Not a bill: a subscription is not charged per token."
+        lede="An estimate at Anthropic API list prices, shown as ~$… API. Not a bill: a subscription is not charged per token."
       >
         <P>
           Each response is priced by the first row below whose prefix its model id
           starts with, so a longer prefix is listed before a shorter one it begins with.
-          A model with no row adds $0 rather than a guessed price.
+          A model with no row adds $0 rather than a guessed price. Model ids from Amazon
+          Bedrock and Google Vertex are matched from their <C>claude-</C> part, and
+          Claude Haiku 5.5 charges 5 times every price for a request whose prompt is
+          over 100,000 tokens.
         </P>
         <Formula code={formula(prices)} />
         <P>
@@ -243,8 +249,9 @@ export function NumbersSections({ prices }: { prices: PriceTable }) {
           <C>gh run list --branch &lt;branch&gt; --limit 1</C> gives the newest workflow
           run&apos;s name, status and conclusion. When gh cannot answer the tab says
           why: <C>gh is not installed</C>, <C>gh is not signed in</C>,{" "}
-          <C>gh timed out</C> or <C>remote is not on GitHub</C>. Any other failure reads
-          as no pull request for the branch.
+          <C>gh timed out</C>, <C>GitHub unreachable (offline?)</C> or{" "}
+          <C>remote is not on GitHub</C>. Any other failure reads as no pull request for
+          the branch.
         </P>
       </Section>
 
@@ -270,11 +277,13 @@ export function NumbersSections({ prices }: { prices: PriceTable }) {
           </TableBody>
         </Table>
         <P>
-          The kitten panics when the context gauge or any rate-limit gauge is red. Short
-          of that it types while Claude is working, sleeps once five minutes have passed
-          since a turn last started or ended, and otherwise idles. It moves a frame
-          every 300 milliseconds while the HUD is shown, and not at all while it is
-          hidden.
+          The colours come from your Claude Code theme, so they stay readable on light
+          and dark terminals; only orange is fixed. The kitten panics when the context
+          gauge or the 5-hour gauge is red. Short of that it types while Claude is
+          working, sleeps once five minutes have passed since a turn last started or
+          ended, and otherwise idles. It moves a frame every 300 milliseconds while the
+          HUD is shown, and not at all while it is hidden or paused with{" "}
+          <C>/hud still</C>.
         </P>
       </Section>
     </>

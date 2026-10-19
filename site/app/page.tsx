@@ -34,7 +34,7 @@ const TABS: { title: string; Icon: LucideIcon; body: string }[] = [
   {
     title: "Usage",
     Icon: Gauge,
-    body: "How full the context window is, in tokens used and left. Your 5-hour and weekly rate-limit windows, with the time to each reset. Tokens and estimated cost for today, this week and this month.",
+    body: "How full the context window is, in tokens used and left. Your 5-hour and weekly rate-limit windows, with the time to each reset. Input and output tokens and estimated cost for today, this week and this month, with cache tokens beside them.",
   },
   {
     title: "Stats",
@@ -49,12 +49,12 @@ const TABS: { title: string; Icon: LucideIcon; body: string }[] = [
   {
     title: "The kitten",
     Icon: Cat,
-    body: "A small ASCII kitten beside the gauges. It idles, types while Claude works, sleeps once five minutes pass without a turn, and panics when a gauge reaches 90%.",
+    body: "A small ASCII kitten beside the gauges. It idles, types while Claude works, sleeps once five minutes pass without a turn, and panics when the context or 5-hour gauge reaches 90%. /hud still stops it moving.",
   },
 ];
 
 const LIMITS: string[] = [
-  "Dollars are an estimate at API list prices, shown with a ~. They are not a bill: a subscription is not charged per token.",
+  "Dollars are an estimate at API list prices, shown as ~$… API. They are not a bill: a subscription is not charged per token.",
   "A model missing from the price table counts as $0 until the table is updated.",
   "Rate-limit windows are only reported on a subscription.",
   "A transcript that was forked or copied is counted twice for the rows it shares.",
@@ -112,7 +112,7 @@ export default function Page() {
   const facts: { term: string; value: string }[] = [
     { term: "Runs in", value: "Claude Code, above the prompt" },
     { term: "Reads", value: "Transcripts already on disk" },
-    { term: "Needs", value: "Node.js; git; gh optional" },
+    { term: "Needs", value: "Node.js 20.1+; git; gh optional" },
     { term: "Version", value: `${version}, MIT` },
   ];
 
@@ -256,9 +256,10 @@ export default function Page() {
             eyebrow="How the numbers are produced"
             title="Measured where it can be, summed where it cannot."
           >
-            Nothing on the band is a guess. Each figure is either reported by Claude
-            Code or added up from files already on your machine, and the one estimate is
-            marked as one.
+            Nothing on the band is made up. Each figure is either reported by Claude
+            Code or added up from files already on your machine. The one estimate, the
+            cost, is marked as one, and a model missing from the price table counts as
+            $0.
           </Heading>
 
           <ol className="mt-10 grid gap-4 md:grid-cols-2">
@@ -320,11 +321,7 @@ export default function Page() {
           </Heading>
 
           <BlurFade className="mt-10 max-w-[44rem]">
-            <CodeBlock
-              title="Install Plimsoll"
-              code={INSTALL_COMMANDS}
-              caption="Coming from usage-board? Uninstall usage-board@usage-board and remove the usage-board marketplace first. The scan cache carries over; the hidden state does not."
-            />
+            <CodeBlock title="Install Plimsoll" code={INSTALL_COMMANDS} />
           </BlurFade>
 
           <BlurFade>

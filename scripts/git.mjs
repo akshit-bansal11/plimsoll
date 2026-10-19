@@ -14,9 +14,11 @@ const GH_TIMEOUT_MS = 8000
 // git and gh are found on PATH here, by absolute folder, and run by full path:
 // on Windows a bare name is looked up in the working directory first, and that
 // directory is the repository being inspected, which could hold a planted git.exe.
+// Windows PATH entries may be quoted; the quotes are not part of the folder.
 const find = name => {
   const file = process.platform === 'win32' ? `${name}.exe` : name
-  for (const folder of (process.env.PATH || '').split(delimiter)) {
+  for (const entry of (process.env.PATH || '').split(delimiter)) {
+    const folder = entry.replace(/^"(.*)"$/, '$1')
     if (isAbsolute(folder) && existsSync(join(folder, file))) return join(folder, file)
   }
   throw Object.assign(new Error(`${name} is not on PATH`), { code: 'ENOENT' })
@@ -43,8 +45,8 @@ const run = (name, args, timeout) =>
   execFileSync(find(name), args, { cwd: dir, env, encoding: 'utf8', timeout, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true })
 const git = (...args) => run('git', args, GIT_TIMEOUT_MS)
 const gh = args => run('gh', args, GH_TIMEOUT_MS)
-// Repository and GitHub text is untrusted: an escape sequence must not reach the terminal.
-const clean = text => String(text).replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ').trim()
+// Repository and GitHub text is untrusted: no escape sequence, bidi override or zero-width character reaches the terminal.
+const clean = text => String(text).replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, ' ').trim()
 
 let top
 try {
@@ -137,6 +139,7 @@ else {
     else if (error.code === 'ETIMEDOUT' || error.killed) ghProblem = 'gh timed out'
     else if (/not logged in|gh auth login|authentication/i.test(stderr)) ghProblem = 'gh is not signed in'
     else if (/none of the git remotes|not a github|no known github host/i.test(stderr)) ghProblem = 'remote is not on GitHub'
+    else if (/could not resolve|no such host|dial tcp|connection refused|network is unreachable|i\/o timeout|error connecting/i.test(stderr)) ghProblem = 'GitHub unreachable (offline?)'
     // any other failure is "no pull request for this branch": pr stays null
   }
 

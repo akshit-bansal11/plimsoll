@@ -17,7 +17,7 @@ export function SiteFooter() {
           </p>
           <p className="text-dim mt-1">
             MIT licensed. The version, prices and band mock-up here are read from the
-            repository at build time.
+            repository at build time. Not affiliated with Anthropic.
           </p>
         </div>
         <div className="flex flex-wrap gap-x-5">

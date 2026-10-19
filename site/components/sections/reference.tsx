@@ -13,6 +13,7 @@ const LIMITS: string[] = [
 ];
 
 const CHECKS = `node scripts/check.mjs              # price table check
+node scripts/selftest.mjs           # runs git.mjs and scan.mjs on a throwaway repo
 claude plugin validate --strict .   # manifest + hooks check
 claude plugin test .                # UI and logic tests`;
 
@@ -24,7 +25,7 @@ npm run build      # static export to site/out`;
 const LAYOUT = `hooks/register.tsx    the band, the /hud command and the status line
 hooks/mascot.ts       the kitten's frames
 scripts/scan.mjs      sums the transcripts
-scripts/cache.mjs     names the scan cache, carries the old one over
+scripts/cache.mjs     names the scan cache
 scripts/prices.mjs    the price table
 scripts/git.mjs       reads git and gh
 tests/                the mod's tests
@@ -75,8 +76,8 @@ export function ReferenceSections({ version }: { version: string }) {
           </li>
           <li>
             Branch names, commit subjects, pull request titles and workflow names have
-            control characters replaced before they are drawn, so an escape sequence
-            cannot reach your terminal.
+            control, bidirectional-override and zero-width characters replaced before
+            they are drawn, so an escape sequence cannot reach your terminal.
           </li>
         </ul>
         <P>
@@ -121,7 +122,7 @@ export function ReferenceSections({ version }: { version: string }) {
         <CodeBlock
           title="The checks"
           code={CHECKS}
-          caption="CI runs the same three on every push and pull request, with the Claude Code CLI pinned to one version."
+          caption="CI runs the same four on every push and pull request, with the Claude Code CLI pinned to one version."
         />
         <P>
           The mod tests cannot import <C>node:</C> modules, so script logic that needs a

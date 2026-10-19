@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit",
     "check": "biome check --write . && eslint . && tsc --noEmit",
     "check:ci": "biome ci . && eslint . && tsc --noEmit",
-    "preview": "npx --yes serve out"
+    "preview": "npx --yes serve@14.2.6 out"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "1.3.1",

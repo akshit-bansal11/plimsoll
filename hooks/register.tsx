@@ -17,12 +17,14 @@ const MASCOT_COL = MASCOT_WIDTH + GAP
 const LABEL = 7
 const NO_NODE = 'Node.js not found on PATH'
 
-const ARC = '#00E5FF'
-const OK = '#22C55E'
-const WARM = '#EAB308'
+// Theme keys follow the user's Claude Code theme, so the band reads on light and dark terminals.
+const ARC = 'suggestion'
+const OK = 'success'
+const WARM = 'warning'
+// No theme key sits between warning and error.
 const HOT = '#F97316'
-const CRIT = '#EF4444'
-const FUR = '#FFB3D1'
+const CRIT = 'error'
+const FUR = 'claude'
 
 const totals = atom({ plugin: 'plimsoll', key: 'totals' } as const, null)
 const limits = atom({ plugin: 'plimsoll', key: 'limits' } as const, [])
@@ -31,6 +33,7 @@ const context = atom({ plugin: 'plimsoll', key: 'context' } as const, null)
 const git = atom({ plugin: 'plimsoll', key: 'git' } as const, null)
 const tab = atom({ plugin: 'plimsoll', key: 'tab' } as const, 'usage')
 const isHidden = atom({ plugin: 'plimsoll', key: 'isHidden' } as const, false)
+const isStill = atom({ plugin: 'plimsoll', key: 'isStill' } as const, false)
 const frame = atom({ plugin: 'plimsoll', key: 'frame' } as const, 0)
 const activeAt = atom({ plugin: 'plimsoll', key: 'activeAt' } as const, 0)
 
@@ -46,7 +49,10 @@ const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const when = (isShown: boolean, node: RenderNode): RenderNode =>
   isShown ? node : ''
 
-const sumOf = (t: Tokens) => t.input + t.output + t.cacheWrite + t.cacheRead
+// Cache reads re-bill the same prompt every turn and dwarf the rest, so totals count
+// input and output, and the cache is shown beside them.
+const workOf = (t: Tokens) => t.input + t.output
+const cacheOf = (t: Tokens) => t.cacheWrite + t.cacheRead
 
 export const compact = (n: number) => {
   if (n < 1000) return String(n)
@@ -57,7 +63,8 @@ export const compact = (n: number) => {
   return `${(n / 1e9).toFixed(2)}B`
 }
 
-const dollars = (usd: number) => `~$${usd.toFixed(2)}`
+// "API": an estimate at API list prices, not what a subscription is billed.
+const dollars = (usd: number) => `~$${usd.toFixed(2)} API`
 
 export const untilReset = (resetsAt: string | undefined, now: number) => {
   const left = resetsAt === undefined ? NaN : Date.parse(resetsAt) - now
@@ -108,23 +115,19 @@ const quietly = (job: () => Promise<unknown>) => job().catch(() => undefined)
 
 /** One spelling for "node could not even start", whatever the OS called it. */
 const problemFrom = (text: string, other: string) =>
-  /ENOENT|not found|not recognized/i.test(text) ? NO_NODE : other
+  /ENOENT|not recognized|command not found|node: not found/i.test(text)
+    ? NO_NODE
+    : other
 
-const runNode = async (
+const runNode = (
   $: EngineInterface,
   script: string,
   args: string[],
   timeoutMs: number,
-) => {
-  try {
-    return await $.process.run(
-      ['node', `${$.plugin.root}/scripts/${script}`, ...args],
-      { timeoutMs },
-    )
-  } catch {
-    throw new Error(NO_NODE)
-  }
-}
+) =>
+  $.process.run(['node', `${$.plugin.root}/scripts/${script}`, ...args], {
+    timeoutMs,
+  })
 
 const showStatus = async ($: EngineInterface) => {
   if (!(await read($, isHidden))) {
@@ -138,7 +141,7 @@ const showStatus = async ($: EngineInterface) => {
   )
   const scanned = await read($, totals)
   if (scanned) {
-    parts.push(`today ${compact(sumOf(scanned.today))} tok`)
+    parts.push(`today ${compact(workOf(scanned.today))} tok`)
     parts.push(dollars(scanned.usd.today))
   }
   parts.push('/hud')
@@ -219,7 +222,7 @@ const measure = async (
 
 const tick = ($: EngineInterface) =>
   quietly(async () => {
-    if (!(await read($, isHidden))) await update($, frame, n => n + 1)
+    if (!(await read($, isHidden)) && !(await read($, isStill))) await update($, frame, n => n + 1)
   })
 
 const readUsage = ($: EngineInterface) =>
@@ -229,11 +232,14 @@ export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'hud',
-      description: 'Show or hide the usage HUD, or switch its tab',
-      argumentHint: '[usage|stats|git|hide|show]',
+      description: 'Show or hide the usage HUD, switch its tab, or pause the mascot',
+      argumentHint: '[usage|stats|git|hide|show|still]',
     })
     if ((await $.store.get('isHidden')) === true) {
       await update($, isHidden, () => true)
+    }
+    if ((await $.store.get('isStill')) === true) {
+      await update($, isStill, () => true)
     }
     const now = await $.clock.now()
     await update($, activeAt, () => now)
@@ -283,8 +289,14 @@ export const register: Register = on => {
       await update($, tab, () => arg)
       if (arg === 'git') void refreshGit($)
       text = `HUD: ${arg}`
+    } else if (arg === 'still') {
+      const still = !(await read($, isStill))
+      await update($, isStill, () => still)
+      await $.store.set('isStill', still)
+
+      return { text: still ? 'Mascot paused. /hud still starts it again.' : 'Mascot moving.' }
     } else {
-      return { text: 'Usage: /hud [usage|stats|git|hide|show]' }
+      return { text: 'Usage: /hud [usage|stats|git|hide|show|still]' }
     }
     await update($, isHidden, () => hidden)
     await $.store.set('isHidden', hidden)
@@ -315,9 +327,10 @@ export const register: Register = on => {
     const area = columns - MASCOT_COL
     const leftW = isWide ? Math.floor((area - GAP) * LEFT_SHARE) : area
     const rightW = isWide ? area - GAP - leftW : area
+    // Only the context and 5-hour windows panic the kitten: the weekly one can sit high for days.
     const pose = mascot(
       moodOf(
-        [window?.percent ?? 0, ...windows.map(l => l.percentUsed)],
+        [window?.percent ?? 0, ...windows.filter(l => l.kind === 'five_hour').map(l => l.percentUsed)],
         e.props.isWorking,
         now - lastActive,
       ),
@@ -374,9 +387,10 @@ export const register: Register = on => {
     const total = (label: string, tokens: Tokens, usd: number) => (
       <Text wrap="truncate-end">
         <Text color={ARC}>{label.padEnd(LABEL)}</Text>
-        {`${compact(sumOf(tokens))} tok`.padStart(11)}
+        {`${compact(workOf(tokens))} tok`.padStart(11)}
         {'  '}
         {dollars(usd)}
+        <Text dimColor>{`  +${compact(cacheOf(tokens))} cache`}</Text>
       </Text>
     )
 
@@ -448,7 +462,7 @@ export const register: Register = on => {
         <>
           {labelled(
             'HOURS',
-            <Text color={ARC}>{spark(hours)}</Text>,
+            <Text color={ARC} wrap="truncate-end">{spark(hours)}</Text>,
             when(
               hasHours,
               <Text dimColor wrap="truncate-end">
@@ -459,15 +473,15 @@ export const register: Register = on => {
           <Text dimColor wrap="truncate-end">{`${' '.repeat(LABEL)}0     6     12    18    `}</Text>
           {labelled(
             'DAYS',
-            <Text color={ARC}>{spark(weekdays)}</Text>,
+            <Text color={ARC} wrap="truncate-end">{spark(weekdays)}</Text>,
             <Text dimColor wrap="truncate-end">
               {hasHours
                 ? `  Mon→Sun · busiest ${DAYS[weekdays.indexOf(Math.max(...weekdays))]}`
                 : '  Mon→Sun'}
             </Text>,
           )}
-          {labelled('30D', <Text color={ARC}>{spark(days.map(d => d.tokens))}</Text>)}
-          {labelled('12MO', <Text color={ARC}>{spark(months.map(m => m.tokens))}</Text>)}
+          {labelled('30D', <Text color={ARC} wrap="truncate-end">{spark(days.map(d => d.tokens))}</Text>)}
+          {labelled('12MO', <Text color={ARC} wrap="truncate-end">{spark(months.map(m => m.tokens))}</Text>)}
         </>
         ),
         right: (

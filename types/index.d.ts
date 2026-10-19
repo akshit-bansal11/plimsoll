@@ -26,8 +26,6 @@ export type Stats = {
 
 /** What scripts/scan.mjs prints. */
 export type Totals = {
-  /** `Date#getTimezoneOffset()` of the machine, in minutes. */
-  tzOffset: number
   today: Tokens
   week: Tokens
   month: Tokens
@@ -96,6 +94,8 @@ declare module 'claude-code' {
       git: Git | null
       tab: Tab
       isHidden: boolean
+      /** The mascot's animation is paused (`/hud still`). */
+      isStill: boolean
       /** The mascot's animation frame, advanced by a timer. */
       frame: number
       /** When a turn last started or ended, epoch ms: the mascot sleeps long after it. */

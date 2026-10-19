@@ -6,7 +6,7 @@ Plimsoll reads your transcripts and runs git and `gh` in whatever directory a se
 
 - **Nothing leaves your machine, except through `gh`.** Token totals and statistics are summed locally from the transcripts under your Claude config folder; the only file the plugin writes is its scan cache in `<config dir>/plimsoll/`. The one network call is `gh pr view` and `gh run list`, to GitHub, with your own `gh` sign-in, for the repository you are in. No server, no account, no telemetry.
 - **The inspected repository is untrusted.** git and `gh` are found on `PATH` by absolute folder and run by full path, so a `git.exe` or `gh.exe` planted in the repository is never run on Windows. The repository's `core.fsmonitor` and `log.showSignature` settings are overridden, since each names a program for git to run, and optional index locks and terminal prompts are switched off.
-- **Repository and GitHub text is untrusted.** Branch names, commit subjects, pull request titles and workflow names have control characters replaced before they are drawn, so an escape sequence cannot reach your terminal.
+- **Repository and GitHub text is untrusted.** Branch names, commit subjects, pull request titles and workflow names have control, bidirectional-override and zero-width characters replaced before they are drawn, so an escape sequence cannot reach your terminal.
 - **The hooks start nothing but the plugin's own scripts.** They import only `claude-code`, and the one program they run is `node`, on `scripts/scan.mjs` or `scripts/git.mjs`.
 
 ## Known limits

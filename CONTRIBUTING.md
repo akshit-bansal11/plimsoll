@@ -28,6 +28,7 @@ The site under `site/` is separate and needs Node 24: `cd site && npm ci`, then 
 3. Run the checks until they are clean:
    ```
    node scripts/check.mjs
+   node scripts/selftest.mjs
    claude plugin validate --strict .
    claude plugin test .
    ```

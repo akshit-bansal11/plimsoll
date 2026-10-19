@@ -321,10 +321,7 @@ export default function Page() {
           </Heading>
 
           <BlurFade className="mt-10 max-w-[44rem]">
-            <CodeBlock
-              title="Install Plimsoll"
-              code={INSTALL_COMMANDS}
-            />
+            <CodeBlock title="Install Plimsoll" code={INSTALL_COMMANDS} />
           </BlurFade>
 
           <BlurFade>

@@ -64,7 +64,11 @@ export default function RootLayout({
       {/* Without JavaScript, motion never animates the blocks in: show them as they are. */}
       <head>
         <noscript>
-          <style>{".blur-fade{opacity:1!important;filter:none!important;transform:none!important}"}</style>
+          <style>
+            {
+              ".blur-fade{opacity:1!important;filter:none!important;transform:none!important}"
+            }
+          </style>
         </noscript>
       </head>
       <body className={`${mono.variable} ${sans.variable} font-sans`}>

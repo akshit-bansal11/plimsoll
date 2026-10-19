@@ -67,8 +67,8 @@ export function GuideSections() {
         />
         <P>
           The first scan reads every transcript once. Whether the HUD was hidden is
-          stored under the plugin&apos;s name, so it resets once: run{" "}
-          <C>/hud hide</C> again if it was.
+          stored under the plugin&apos;s name, so it resets once: run <C>/hud hide</C>{" "}
+          again if it was.
         </P>
       </Section>
 

@@ -2,29 +2,34 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, RenderNode } from 'claude-code'
 
 import type { Context, Git, Limit, Tab, Tokens, Totals } from '../types'
-import { MASCOT_TICK_MS, MASCOT_WIDTH, mascot } from './mascot'
+import type { CatProps } from './cat'
+import { MASCOT_ROWS, MASCOT_WIDTH, cells, mascot } from './mascot'
 import type { Mood } from './mascot'
 
-const SLEEP_MS = 5 * 60_000
 // git.mjs has internal timeouts that add up to 41 s.
 const GIT_TIMEOUT_MS = 45_000
 const PANEL_MIN = 48
 // At or above this the two content columns sit side by side; below, they stack.
 const WIDE = 110
 const GAP = 2
+// The rule between the side-by-side columns: a space, the line, a space.
+const DIVIDER = 3
 const LEFT_SHARE = 0.58
 const MASCOT_COL = MASCOT_WIDTH + GAP
+// The cat's pixel rows and its caption line under them.
+const BODY_ROWS = MASCOT_ROWS + 1
 const LABEL = 7
 const NO_NODE = 'Node.js not found on PATH'
 
 // Theme keys follow the user's Claude Code theme, so the band reads on light and dark terminals.
-const ARC = 'suggestion'
+const ACCENT = 'suggestion'
+const ON_ACCENT = 'inverseText'
+const LABEL_INK = 'inactive'
 const OK = 'success'
 const WARM = 'warning'
 // No theme key sits between warning and error.
 const HOT = '#F97316'
 const CRIT = 'error'
-const FUR = 'claude'
 
 const totals = atom({ plugin: 'plimsoll', key: 'totals' } as const, null)
 const limits = atom({ plugin: 'plimsoll', key: 'limits' } as const, [])
@@ -34,7 +39,6 @@ const git = atom({ plugin: 'plimsoll', key: 'git' } as const, null)
 const tab = atom({ plugin: 'plimsoll', key: 'tab' } as const, 'usage')
 const isHidden = atom({ plugin: 'plimsoll', key: 'isHidden' } as const, false)
 const isStill = atom({ plugin: 'plimsoll', key: 'isStill' } as const, false)
-const frame = atom({ plugin: 'plimsoll', key: 'frame' } as const, 0)
 const activeAt = atom({ plugin: 'plimsoll', key: 'activeAt' } as const, 0)
 
 const WINDOWS: Record<string, string> = {
@@ -83,7 +87,7 @@ export const level = (percent: number) =>
 export const meter = (percent: number, width: number) => {
   const n = Math.round((Math.min(100, Math.max(0, percent)) / 100) * width)
 
-  return { filled: '▰'.repeat(n), empty: '▱'.repeat(Math.max(0, width - n)) }
+  return { filled: '━'.repeat(n), empty: '━'.repeat(Math.max(0, width - n)) }
 }
 
 export const spark = (values: number[]) => {
@@ -94,15 +98,11 @@ export const spark = (values: number[]) => {
     .join('')
 }
 
-export const moodOf = (
-  percents: number[],
-  isWorking: boolean,
-  idleMs: number,
-): Mood => {
+// Sleep is the cat's own call: it counts quiet ticks itself (mascot.ts `settle`).
+export const moodOf = (percents: number[], isWorking: boolean): Mood => {
   if (percents.some(percent => level(percent) === CRIT)) return 'alarm'
-  if (isWorking) return 'working'
 
-  return idleMs > SLEEP_MS ? 'sleeping' : 'idle'
+  return isWorking ? 'working' : 'idle'
 }
 
 let isScanning = false
@@ -220,11 +220,6 @@ const measure = async (
   await showStatus($)
 }
 
-const tick = ($: EngineInterface) =>
-  quietly(async () => {
-    if (!(await read($, isHidden)) && !(await read($, isStill))) await update($, frame, n => n + 1)
-  })
-
 const readUsage = ($: EngineInterface) =>
   quietly(async () => measure($, await $.session.usage()))
 
@@ -243,9 +238,6 @@ export const register: Register = on => {
     }
     const now = await $.clock.now()
     await update($, activeAt, () => now)
-    $.clock.every(MASCOT_TICK_MS, () => {
-      void tick($)
-    })
     void scan($)
     void refreshGit($)
     void readUsage($)
@@ -311,31 +303,34 @@ export const register: Register = on => {
     // A band too narrow for the panel draws nothing rather than a broken one.
     if (e.props.bodyColumns < PANEL_MIN) return next(e)
 
-    const { Box, Text, Button } = $.ui.resolve(e)
+    const elements = $.ui.resolve(e)
+    const { Box, Text, Button } = elements
+    // Mobile and VS Code draw no Client: they get a still cat instead.
+    const Client = 'Client' in elements ? elements.Client : undefined
     const windows = await read($, limits)
     const scanned = await read($, totals)
     const failed = await read($, problem)
     const window = await read($, context)
     const repo = await read($, git)
     const active = await read($, tab)
-    const beat = await read($, frame)
     const lastActive = await read($, activeAt)
+    const still = await read($, isStill)
     const now = await $.clock.now()
 
     const columns = e.props.bodyColumns
     const isWide = columns >= WIDE
     const area = columns - MASCOT_COL
-    const leftW = isWide ? Math.floor((area - GAP) * LEFT_SHARE) : area
-    const rightW = isWide ? area - GAP - leftW : area
-    // Only the context and 5-hour windows panic the kitten: the weekly one can sit high for days.
-    const pose = mascot(
-      moodOf(
+    const leftW = isWide ? Math.floor((area - DIVIDER) * LEFT_SHARE) : area
+    const rightW = isWide ? area - DIVIDER - leftW : area
+    // Only the context and 5-hour windows panic the cat: the weekly one can sit high for days.
+    const catProps: CatProps = {
+      mood: moodOf(
         [window?.percent ?? 0, ...windows.filter(l => l.kind === 'five_hour').map(l => l.percentUsed)],
         e.props.isWorking,
-        now - lastActive,
       ),
-      beat,
-    )
+      activeAt: lastActive,
+      isStill: still,
+    }
 
     const tabButton = (id: Tab, hotkey: string, label: string) => (
       <Button
@@ -347,18 +342,30 @@ export const register: Register = on => {
           if (id === 'git') void refreshGit($)
         }}
       >
-        <Text bold={active === id} color={active === id ? ARC : undefined} dimColor={active !== id}>
-          {label}
+        <Text
+          bold={active === id}
+          color={active === id ? ON_ACCENT : LABEL_INK}
+          backgroundColor={active === id ? ACCENT : undefined}
+        >
+          {` ${label} `}
         </Text>
       </Button>
     )
 
-    // A coloured label, then whatever the row says.
+    // A muted label, then whatever the row says.
     const labelled = (label: string, ...children: RenderNode[]) => (
       <Box>
-        <Text color={ARC}>{label.padEnd(LABEL)}</Text>
+        <Text color={LABEL_INK}>{label.padEnd(LABEL)}</Text>
         {children}
       </Box>
+    )
+
+    // The heading over a column.
+    const section = (title: string, note = '') => (
+      <Text wrap="truncate-end">
+        <Text bold color={ACCENT}>{title}</Text>
+        <Text dimColor>{note === '' ? '' : `  ${note}`}</Text>
+      </Text>
     )
 
     const gauge = (label: string, percent: number, detail: string) => {
@@ -370,9 +377,9 @@ export const register: Register = on => {
 
       return (
         <Box key={label}>
-          <Text color={ARC}>{label.padEnd(LABEL)}</Text>
+          <Text color={LABEL_INK}>{label.padEnd(LABEL)}</Text>
           <Text color={c}>{filled}</Text>
-          <Text dimColor>{empty}</Text>
+          <Text color={LABEL_INK} dimColor>{empty}</Text>
           <Text bold color={c}>
             {`${Math.round(percent)}%`.padStart(5)}
           </Text>
@@ -386,10 +393,9 @@ export const register: Register = on => {
     // Dollars are an estimate at API list prices (scripts/prices.mjs), not a bill.
     const total = (label: string, tokens: Tokens, usd: number) => (
       <Text wrap="truncate-end">
-        <Text color={ARC}>{label.padEnd(LABEL)}</Text>
-        {`${compact(workOf(tokens))} tok`.padStart(11)}
-        {'  '}
-        {dollars(usd)}
+        <Text color={LABEL_INK}>{label.padEnd(LABEL)}</Text>
+        <Text bold>{`${compact(workOf(tokens))} tok`.padStart(11)}</Text>
+        <Text bold color={OK}>{dollars(usd).padStart(14)}</Text>
         <Text dimColor>{`  +${compact(cacheOf(tokens))} cache`}</Text>
       </Text>
     )
@@ -462,7 +468,7 @@ export const register: Register = on => {
         <>
           {labelled(
             'HOURS',
-            <Text color={ARC} wrap="truncate-end">{spark(hours)}</Text>,
+            <Text color={ACCENT} wrap="truncate-end">{spark(hours)}</Text>,
             when(
               hasHours,
               <Text dimColor wrap="truncate-end">
@@ -473,15 +479,15 @@ export const register: Register = on => {
           <Text dimColor wrap="truncate-end">{`${' '.repeat(LABEL)}0     6     12    18    `}</Text>
           {labelled(
             'DAYS',
-            <Text color={ARC} wrap="truncate-end">{spark(weekdays)}</Text>,
+            <Text color={ACCENT} wrap="truncate-end">{spark(weekdays)}</Text>,
             <Text dimColor wrap="truncate-end">
               {hasHours
                 ? `  Mon→Sun · busiest ${DAYS[weekdays.indexOf(Math.max(...weekdays))]}`
                 : '  Mon→Sun'}
             </Text>,
           )}
-          {labelled('30D', <Text color={ARC} wrap="truncate-end">{spark(days.map(d => d.tokens))}</Text>)}
-          {labelled('12MO', <Text color={ARC} wrap="truncate-end">{spark(months.map(m => m.tokens))}</Text>)}
+          {labelled('30D', <Text color={ACCENT} wrap="truncate-end">{spark(days.map(d => d.tokens))}</Text>)}
+          {labelled('12MO', <Text color={ACCENT} wrap="truncate-end">{spark(months.map(m => m.tokens))}</Text>)}
         </>
         ),
         right: (
@@ -526,9 +532,9 @@ export const register: Register = on => {
       const counts = [
         { n: repo.staged, text: `+${repo.staged} staged`, color: OK },
         { n: repo.modified, text: `!${repo.modified} modified`, color: WARM },
-        { n: repo.untracked, text: `?${repo.untracked} untracked`, color: ARC },
+        { n: repo.untracked, text: `?${repo.untracked} untracked`, color: ACCENT },
         { n: repo.conflicted, text: `✖${repo.conflicted} conflicts`, color: CRIT },
-        { n: repo.stashes, text: `≡${repo.stashes} stash`, color: ARC },
+        { n: repo.stashes, text: `≡${repo.stashes} stash`, color: ACCENT },
       ]
       const ciColor =
         ci?.conclusion === 'success'
@@ -541,7 +547,7 @@ export const register: Register = on => {
         left: (
         <>
           <Text wrap="truncate-end">
-            <Text bold color={ARC}>
+            <Text bold color={ACCENT}>
               {repo.repo}
             </Text>
             <Text bold>{`   ${repo.branch}`}</Text>
@@ -624,34 +630,59 @@ export const register: Register = on => {
     })()
 
     const rows = { usage: usageRows, stats: statsRows, git: gitRows }[active]
+    const titles = {
+      usage: [section('LIMITS'), section('SPEND', 'est. at API prices')],
+      stats: [section('ACTIVITY'), section('RECORDS')],
+      git: [section('REPOSITORY'), section('GITHUB')],
+    }[active]
 
     return (
       <Box flexDirection="column" width={columns}>
         <Box width={columns}>
-          <Text color={ARC} dimColor>── </Text>
-          <Text bold color={ARC}>◢ PLIMSOLL</Text>
-          {when(pose.caption !== '', <Text dimColor>{` · ${pose.caption}`}</Text>)}
-          <Box flexGrow={1} flexShrink={1}>
-            <Text color={ARC} dimColor wrap="truncate-end">{' ' + '─'.repeat(columns)}</Text>
+          <Box flexShrink={0}>
+            <Text bold color={ACCENT}>◢ PLIMSOLL</Text>
           </Box>
-          {tabButton('usage', '1', 'USAGE')}
-          <Text> </Text>
-          {tabButton('stats', '2', 'STATS')}
-          <Text> </Text>
-          {tabButton('git', '3', 'GIT')}
-          <Text color={ARC} dimColor> ──</Text>
+          <Box flexGrow={1} flexShrink={1}>
+            <Text color={LABEL_INK} dimColor wrap="truncate-end">{' ' + '─'.repeat(columns)}</Text>
+          </Box>
+          <Box flexShrink={0}>
+            <Text> </Text>
+            {tabButton('usage', '1', 'USAGE')}
+            <Text> </Text>
+            {tabButton('stats', '2', 'STATS')}
+            <Text> </Text>
+            {tabButton('git', '3', 'GIT')}
+          </Box>
         </Box>
         <Box>
           <Box flexDirection="column" width={MASCOT_COL} flexShrink={0}>
-            {pose.lines.map(line => (
-              <Text color={FUR} wrap="truncate-end">{line}</Text>
-            ))}
+            {Client === undefined ? (
+              cells(mascot(catProps.mood, 0).pixels).map(runs => (
+                <Text wrap="truncate-end">
+                  {runs.map(run => (
+                    <Text color={run.color} backgroundColor={run.backgroundColor}>{run.text}</Text>
+                  ))}
+                </Text>
+              ))
+            ) : (
+              <Client key="cat" module="./cat.tsx" props={catProps} width={MASCOT_WIDTH} height={BODY_ROWS} />
+            )}
           </Box>
-          <Box flexDirection={isWide ? 'row' : 'column'} columnGap={GAP} width={area}>
-            <Box flexDirection="column" width={leftW} flexShrink={0}>
+          <Box flexDirection={isWide ? 'row' : 'column'} width={area} minHeight={BODY_ROWS}>
+            <Box flexDirection="column" justifyContent="center" width={leftW} flexShrink={0}>
+              {titles[0]}
               {rows.left}
             </Box>
-            <Box flexDirection="column" width={rightW}>
+            {when(
+              isWide,
+              <Box flexDirection="column" width={DIVIDER} flexShrink={0} alignItems="center">
+                {Array.from({ length: BODY_ROWS }, () => (
+                  <Text color={LABEL_INK} dimColor>│</Text>
+                ))}
+              </Box>,
+            )}
+            <Box flexDirection="column" justifyContent="center" width={rightW} marginTop={isWide ? 0 : 1}>
+              {titles[1]}
               {rows.right}
             </Box>
           </Box>

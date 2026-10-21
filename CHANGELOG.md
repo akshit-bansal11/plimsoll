@@ -6,6 +6,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-21
+
+### Added
+- The cat is interactive: it watches a hovering pointer, gets crosser with each quick click (up to a hiss), and purrs when you press and drag across it to pet it.
+
+### Changed
+- The mascot is now a pixel-art tabby drawn in coloured half blocks, with new idle acts (wave, groom, yarn, purr, dance), a laptop while working, a curled-up sleep and a bristled alarm. `/hud still` still pauses it.
+- The band has pill-style tabs, a heading over each column, a divider between the columns, and its content centred beside the cat. Its colours still follow your Claude Code theme.
+- Gauges draw as a continuous line instead of segments.
+- The cat is 20 columns by 5 rows and its caption moved from the header to under it.
+- The title and tabs no longer wrap when the band is narrow.
+- The cat animates in its own region, so the rest of the band is no longer redrawn on every animation frame.
+
 ## [0.3.1] - 2026-10-20
 
 ### Added
@@ -66,5 +79,6 @@ All notable changes to this project are documented here. The format follows
 ### Removed
 - The side pane and the `/usage-board` command of 0.1.0.
 
-[Unreleased]: https://github.com/akshit-bansal11/plimsoll/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/akshit-bansal11/plimsoll/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/akshit-bansal11/plimsoll/releases/tag/v0.4.0
 [0.3.1]: https://github.com/akshit-bansal11/plimsoll/releases/tag/v0.3.1

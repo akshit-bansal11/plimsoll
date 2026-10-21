@@ -5,14 +5,16 @@
 Plimsoll is a heads-up display for [Claude Code](https://claude.com/claude-code), drawn in the band above the prompt: how full the context window is, how much of your rate limits is left, what the tokens would have cost, and the state of the repository you are in.
 
 ```
-── ◢ PLIMSOLL · *waves* ──────────────────────────────────────────────────────────────────────────── 1: USAGE  2: STATS  3: GIT ──
-                  CTX    ▰▰▰▰▱▱▱▱▱▱▱▱▱▱▱▱  28%  276.7K used · 723.3K left          TODAY     1.9M tok  ~$8.86 API  +41.7M cache
-    /\_/\         5H     ▰▰▰▰▰▰▰▱▱▱▱▱▱▱▱▱  43%  resets 3h 17m                      WEEK      6.2M tok  ~$31.40 API  +82.8M cache
-   ( ^.^ )/       WEEK   ▰▰▰▰▰▰▰▰▰▱▱▱▱▱▱▱  56%  resets 1d 2h                       MONTH    24.5M tok  ~$142.10 API  +402.8M cache
-    (")(") ~
+◢ PLIMSOLL ──────────────────────────────────────────────────────────────────────────  USAGE   STATS   GIT
+                      │ LIMITS                                          │ SPEND  est. at API prices
+ [ pixel-art tabby,   │ CTX    ━━━━━━━━━━━━━━  28%  276.7K used · 723.3K │ TODAY   1.9M tok   ~$8.86 API  +41.7M cache
+   5 rows tall, in    │ 5H     ━━━━━━━━━━━━━━  43%  resets 3h 17m        │ WEEK    6.2M tok  ~$31.40 API  +82.8M cache
+   coloured half      │ WEEK   ━━━━━━━━━━━━━━  56%  resets 1d 2h         │ MONTH  24.5M tok ~$142.10 API  +402.8M cache
+   blocks ]           │                                                 │
+       ~ la la ~      │                                                 │
 ```
 
-<p align="center"><sub>An illustration of the layout, not real output.</sub></p>
+<p align="center"><sub>An illustration of the layout, not real output. The cat is drawn in colour with half-block characters, two square pixels per cell, so it does not survive being pasted as plain text.</sub></p>
 
 A ship's Plimsoll line is painted on the hull to show how deep it may safely sit; this one shows how close a session is to its limits. It is for keeping an eye on the gauges without stopping to ask: the context window filling up before it compacts, a five-hour window about to run out mid-task, a week's usage creeping up. Everything is read from Claude Code itself, from the transcripts already on your disk and, for pull requests and CI, from GitHub through your own `gh`. There is no server, no account and no telemetry.
 
@@ -26,7 +28,8 @@ A ship's Plimsoll line is painted on the hull to show how deep it may safely sit
 - **Usage** — how full the context window is (tokens used and left), your 5-hour and weekly rate-limit windows with time to reset, and input and output tokens plus estimated cost for today, this week and this month, with cache tokens shown beside them.
 - **Stats** — your peak hours, busiest weekday, the last 30 days and 12 months as sparklines, and your most active day, week and month.
 - **Git** — repository, branch, ahead/behind, staged/modified/untracked/conflict/stash counts, the last commit, the branch's pull request with review state and check counts, and the latest CI run.
-- **A mascot** — a small ASCII kitten that idles, types while Claude works, sleeps once five minutes pass without a turn, and panics when the context window or the 5-hour window reaches 90%. `/hud still` stops it moving.
+- **A mascot** — a pixel-art orange tabby that blinks, looks around, waves, grooms, bats at yarn, purrs and dances while idle, types at a laptop while Claude works, curls up asleep once five minutes pass without a turn, and bristles when the context window or the 5-hour window reaches 90%. Its caption sits under it. It needs a terminal with 24-bit colour to look right. `/hud still` stops it moving.
+- **Play with the cat** — point at it and it stops to watch the pointer; click it and it gets cross (`hey!`, then `mrrrow!`, then a hiss if you keep poking); press and drag across it to pet it and it purrs. The eyes follow the pointer only while it is over the cat, and hovering needs a terminal that reports mouse movement. Where a surface has no interactive regions (mobile, VS Code) the cat is drawn still.
 
 Gauges are green below 50%, yellow from 50%, orange from 75% and red from 90%.
 
@@ -54,7 +57,7 @@ Pick a scope when asked (user scope loads it in every session).
 | --- | --- |
 | Hide or show the HUD | `/hud` (or `/hud hide`, `/hud show`) |
 | Switch tab | `/hud usage`, `/hud stats`, `/hud git` |
-| Pause or restart the kitten | `/hud still` |
+| Pause or restart the cat | `/hud still` |
 | Collapse the band | `ctrl+x ctrl+a` (Claude Code's own shortcut for the band) |
 | Switch tab by key | `ctrl+x tab` to focus the band, then `1`, `2` or `3` |
 
@@ -122,7 +125,8 @@ claude --plugin-dir /path/to/plimsoll       # run it from disk
 ### Layout
 
 - `hooks/register.tsx` — the band, the `/hud` command and the status line.
-- `hooks/mascot.ts` — the kitten's frames.
+- `hooks/mascot.ts` — the cat's pixel-art frames and how it reacts to the pointer.
+- `hooks/cat.tsx` — the cat's own region of the band: its frame clock and pointer input.
 - `scripts/scan.mjs` — sums the transcripts; `scripts/cache.mjs` names its cache; `scripts/prices.mjs` holds the price table.
 - `scripts/git.mjs` — reads git and `gh`.
 - `assets/` — the logo (light and dark) and the social preview, with the HTML it is rendered from.
